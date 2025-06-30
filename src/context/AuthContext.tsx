@@ -39,33 +39,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleSignOut = async () => {
     try {
-      console.log('Signing out...');
+      console.log('Starting sign out process...');
       setLoading(true);
       
-      // Clear state first
+      // Clear state immediately to prevent UI issues
       setUser(null);
       setUserProfile(null);
       setSession(null);
       
-      // Then call Supabase signOut
+      // Call Supabase signOut
       const { error } = await supabase.auth.signOut();
       if (error) {
-        console.error('Sign out error:', error);
+        console.error('Supabase sign out error:', error);
+        // Even if there's an error, we've already cleared the local state
       } else {
-        console.log('Sign out successful');
+        console.log('Supabase sign out successful');
       }
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {
+      // Always set loading to false and ensure state is cleared
       setLoading(false);
+      setUser(null);
+      setUserProfile(null);
+      setSession(null);
+      console.log('Sign out process completed');
     }
   };
 
   useEffect(() => {
     let mounted = true;
-    let initialLoadComplete = false;
+    let authSubscription: any = null;
 
     const loadUserData = async (currentUser: User) => {
+      if (!mounted) return;
+      
       try {
         console.log('Loading profile for user:', currentUser.email);
         const { data: profile, error } = await getUserProfile(currentUser.id);
@@ -96,10 +104,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         if (error) {
           console.error('Error getting initial session:', error);
-        } else {
-          console.log('Initial session:', session?.user?.email || 'No session');
+          setLoading(false);
+          return;
         }
 
+        console.log('Initial session:', session?.user?.email || 'No session');
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -109,13 +118,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUserProfile(null);
         }
         
-        initialLoadComplete = true;
         setLoading(false);
         console.log('Auth initialization complete');
       } catch (error) {
         console.error('Error in initializeAuth:', error);
         if (mounted) {
           setLoading(false);
+          setUser(null);
+          setUserProfile(null);
+          setSession(null);
         }
       }
     };
@@ -123,45 +134,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     initializeAuth();
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+    authSubscription = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!mounted) return;
         
         console.log('Auth state change:', event, session?.user?.email || 'No session');
         
-        // Only process auth changes after initial load is complete
-        if (!initialLoadComplete && event !== 'INITIAL_SESSION') {
-          console.log('Skipping auth change - initial load not complete');
-          return;
-        }
-        
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        if (event === 'SIGNED_IN' && session?.user) {
-          console.log('User signed in, loading profile...');
-          await loadUserData(session.user);
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out, clearing profile');
-          setUserProfile(null);
-        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
-          console.log('Token refreshed');
-          // Don't reload profile on token refresh unless we don't have one
-          if (!userProfile) {
-            await loadUserData(session.user);
-          }
-        }
-        
-        // Ensure loading is false after processing auth changes
-        if (initialLoadComplete) {
-          setLoading(false);
+        // Handle different auth events
+        switch (event) {
+          case 'SIGNED_IN':
+            setSession(session);
+            setUser(session?.user ?? null);
+            if (session?.user) {
+              await loadUserData(session.user);
+            }
+            setLoading(false);
+            break;
+            
+          case 'SIGNED_OUT':
+            console.log('Auth state: User signed out');
+            setSession(null);
+            setUser(null);
+            setUserProfile(null);
+            setLoading(false);
+            break;
+            
+          case 'TOKEN_REFRESHED':
+            setSession(session);
+            setUser(session?.user ?? null);
+            // Don't reload profile on token refresh unless we don't have one
+            if (session?.user && !userProfile) {
+              await loadUserData(session.user);
+            }
+            setLoading(false);
+            break;
+            
+          case 'USER_UPDATED':
+            setSession(session);
+            setUser(session?.user ?? null);
+            setLoading(false);
+            break;
+            
+          default:
+            setSession(session);
+            setUser(session?.user ?? null);
+            if (!session?.user) {
+              setUserProfile(null);
+            }
+            setLoading(false);
+            break;
         }
       }
     );
 
     return () => {
       mounted = false;
-      subscription.unsubscribe();
+      if (authSubscription) {
+        authSubscription.data?.subscription?.unsubscribe();
+      }
     };
   }, []);
 
