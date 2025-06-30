@@ -65,47 +65,67 @@ export default function Landing() {
       <section className="relative pt-16 pb-32 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary-600/10 to-secondary-600/10"></div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h1 className="text-5xl md:text-7xl font-bold text-neutral-900 mb-6 animate-fade-in">
-              Find Your Circle
-            </h1>
-            <p className="text-xl md:text-2xl text-neutral-600 mb-4 animate-slide-up">
-              Where Great Minds Learn Alike
-            </p>
-            <p className="text-lg text-neutral-500 mb-12 max-w-2xl mx-auto animate-slide-up">
-              Connect with like-minded students, form study groups, and achieve academic success together. 
-              Join thousands of students already learning smarter, not harder.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
-              <Link to="/signup">
-                <Button size="lg" className="group">
-                  Get Started Free
-                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+            {/* Left Column - Text Content */}
+            <div className="text-center lg:text-left">
+              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-neutral-900 mb-6 animate-fade-in">
+                Find Your Circle
+              </h1>
+              <p className="text-xl md:text-2xl text-neutral-600 mb-4 animate-slide-up">
+                Where Great Minds Learn Alike
+              </p>
+              <p className="text-lg text-neutral-500 mb-12 max-w-2xl mx-auto lg:mx-0 animate-slide-up">
+                Connect with like-minded students, form study groups, and achieve academic success together. 
+                Join thousands of students already learning smarter, not harder.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center animate-slide-up">
+                <Link to="/signup">
+                  <Button size="lg" className="group">
+                    Get Started Free
+                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
+                </Link>
+                <Button variant="outline" size="lg">
+                  Watch Demo
                 </Button>
-              </Link>
-              <Button variant="outline" size="lg">
-                Watch Demo
-              </Button>
+              </div>
             </div>
 
-            <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-              <div className="animate-fade-in">
-                <div className="text-3xl font-bold text-primary-600">10K+</div>
-                <div className="text-neutral-500">Active Students</div>
+            {/* Right Column - Hero Image */}
+            <div className="flex justify-center lg:justify-end">
+              <div className="relative">
+                <img
+                  src="/src/assets/white_circle_360x360.png"
+                  alt="StudyCircle Community"
+                  className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 lg:w-[360px] lg:h-[360px] object-contain animate-fade-in"
+                  style={{ animationDelay: '0.3s' }}
+                />
+                {/* Floating elements for visual interest */}
+                <div className="absolute -top-4 -left-4 w-8 h-8 bg-primary-200 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute -bottom-6 -right-6 w-12 h-12 bg-secondary-200 rounded-full animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+                <div className="absolute top-1/4 -right-8 w-6 h-6 bg-accent-200 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
               </div>
-              <div className="animate-fade-in">
-                <div className="text-3xl font-bold text-secondary-600">500+</div>
-                <div className="text-neutral-500">Study Groups</div>
-              </div>
-              <div className="animate-fade-in">
-                <div className="text-3xl font-bold text-accent-600">95%</div>
-                <div className="text-neutral-500">Success Rate</div>
-              </div>
-              <div className="animate-fade-in">
-                <div className="text-3xl font-bold text-primary-600">4.9★</div>
-                <div className="text-neutral-500">User Rating</div>
-              </div>
+            </div>
+          </div>
+
+          {/* Stats Section */}
+          <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div className="animate-fade-in">
+              <div className="text-3xl font-bold text-primary-600">10K+</div>
+              <div className="text-neutral-500">Active Students</div>
+            </div>
+            <div className="animate-fade-in">
+              <div className="text-3xl font-bold text-secondary-600">500+</div>
+              <div className="text-neutral-500">Study Groups</div>
+            </div>
+            <div className="animate-fade-in">
+              <div className="text-3xl font-bold text-accent-600">95%</div>
+              <div className="text-neutral-500">Success Rate</div>
+            </div>
+            <div className="animate-fade-in">
+              <div className="text-3xl font-bold text-primary-600">4.9★</div>
+              <div className="text-neutral-500">User Rating</div>
             </div>
           </div>
         </div>
