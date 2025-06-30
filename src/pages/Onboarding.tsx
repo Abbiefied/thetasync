@@ -110,15 +110,19 @@ export default function Onboarding() {
 
   const totalSteps = 4;
 
-  // Redirect if not authenticated
+  // Handle redirects and initial data
   useEffect(() => {
-    if (!loading && !user) {
+    if (loading) return;
+
+    if (!user) {
+      console.log('No user found, redirecting to signup');
       navigate('/signup');
       return;
     }
 
-    // Redirect if user already has a profile
-    if (!loading && user && userProfile) {
+    // If user already has a profile, redirect to homepage
+    if (userProfile) {
+      console.log('User already has profile, redirecting to homepage');
       navigate('/homepage');
       return;
     }
@@ -248,6 +252,7 @@ export default function Onboarding() {
         })
       };
 
+      console.log('Creating user profile with data:', profileData);
       const { error: profileError } = await createUserProfile(user.id, profileData);
 
       if (profileError) {
@@ -256,6 +261,7 @@ export default function Onboarding() {
         return;
       }
 
+      console.log('Profile created successfully, refreshing profile...');
       // Refresh the profile in context
       await refreshProfile();
       
@@ -325,7 +331,10 @@ export default function Onboarding() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading...</p>
+        </div>
       </div>
     );
   }

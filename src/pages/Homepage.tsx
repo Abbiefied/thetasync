@@ -130,8 +130,7 @@ const MOCK_RECENT_ACTIVITY: RecentActivity[] = [
 ];
 
 export default function Homepage() {
-  const { user, userProfile, loading } = useAuth();
-  const navigate = useNavigate();
+  const { user, userProfile } = useAuth();
   const [taskSummary, setTaskSummary] = useState<TaskSummary | null>(null);
   const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
   const [nextQuiz, setNextQuiz] = useState<NextQuiz | null>(null);
@@ -140,23 +139,26 @@ export default function Homepage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
     // Simulate API calls to fetch dashboard data
-    setTimeout(() => {
-      setTaskSummary(MOCK_TASK_SUMMARY);
-      setUpcomingSessions(MOCK_UPCOMING_SESSIONS);
-      setNextQuiz(MOCK_NEXT_QUIZ);
-      setLeaderboardRank(MOCK_LEADERBOARD_RANK);
-      setRecentActivity(MOCK_RECENT_ACTIVITY);
-      setIsLoading(false);
-    }, 1000);
-  }, [user, loading, navigate]);
+    const loadDashboardData = async () => {
+      try {
+        // Simulate loading delay
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        setTaskSummary(MOCK_TASK_SUMMARY);
+        setUpcomingSessions(MOCK_UPCOMING_SESSIONS);
+        setNextQuiz(MOCK_NEXT_QUIZ);
+        setLeaderboardRank(MOCK_LEADERBOARD_RANK);
+        setRecentActivity(MOCK_RECENT_ACTIVITY);
+      } catch (error) {
+        console.error('Error loading dashboard data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    loadDashboardData();
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -190,7 +192,7 @@ export default function Homepage() {
     }
   };
 
-  if (loading || isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-neutral-50 pt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

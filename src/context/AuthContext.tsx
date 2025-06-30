@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        console.log('Initial session:', session?.user?.email || 'No session');
+        console.log('Initial session check:', session?.user?.email || 'No session found');
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -73,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const { data: profile } = await getUserProfile(session.user.id);
             if (mounted) {
               setUserProfile(profile);
+              console.log('Profile loaded:', profile ? 'Profile exists' : 'No profile found');
             }
           } catch (profileError) {
             console.error('Error loading profile:', profileError);
@@ -114,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             const { data: profile } = await getUserProfile(session.user.id);
             if (mounted) {
               setUserProfile(profile);
+              console.log('Profile loaded after sign in:', profile ? 'Profile exists' : 'No profile found');
             }
           } catch (error) {
             console.error('Error loading profile after sign in:', error);
@@ -127,9 +129,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }
         }
         
-        if (mounted) {
-          setLoading(false);
-        }
+        // Don't set loading to false here for auth state changes
+        // as it can cause race conditions
       }
     );
 
