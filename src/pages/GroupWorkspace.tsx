@@ -6,31 +6,11 @@ import {
   Search, Filter, Star, Calendar, Target
 } from 'lucide-react';
 import { StudyGroup, Task, Resource, Quiz } from '../types';
+import { getStudyGroupById } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/AppContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-
-const MOCK_GROUP: StudyGroup = {
-  id: '1',
-  name: 'Advanced Algorithms Study Circle',
-  subject: 'Computer Science',
-  description: 'Deep dive into complex algorithms and data structures. Perfect for preparing for technical interviews.',
-  members: [
-    { userId: '1', name: 'You', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() },
-    { userId: '2', name: 'Alex Chen', role: 'Owner', expertise: 'Advanced', joinedAt: new Date() },
-    { userId: '3', name: 'Sarah Kim', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() },
-    { userId: '4', name: 'Mike Johnson', role: 'Member', expertise: 'Advanced', joinedAt: new Date() }
-  ],
-  maxMembers: 8,
-  schedule: [
-    { day: 'Tuesday', startTime: '19:00', endTime: '21:00' },
-    { day: 'Thursday', startTime: '19:00', endTime: '21:00' }
-  ],
-  tags: ['Algorithms', 'Data Structures', 'Interview Prep'],
-  difficulty: 'Advanced',
-  isPrivate: false,
-  createdBy: '2',
-  createdAt: new Date('2024-01-15')
-};
 
 const MOCK_TASKS: Task[] = [
   {
@@ -84,42 +64,98 @@ const MOCK_RESOURCES: Resource[] = [
   }
 ];
 
-const MOCK_MESSAGES = [
-  { id: '1', sender: 'Alex Chen', content: 'Hey everyone! Ready for tomorrow\'s session?', timestamp: new Date(), userId: '2' },
-  { id: '2', sender: 'Sarah Kim', content: 'Yes! I\'ve prepared some practice problems on BST', timestamp: new Date(), userId: '3' },
-  { id: '3', sender: 'You', content: 'Great! I\'ll bring my notes on tree traversal algorithms', timestamp: new Date(), userId: '1' },
-];
-
 type TabType = 'chat' | 'tasks' | 'resources' | 'quizzes' | 'progress';
 
 export default function GroupWorkspace() {
   const { id } = useParams();
+  const { user } = useAuth();
+  const { addNotification } = useNotifications();
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [group, setGroup] = useState<StudyGroup | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
-  const [messages, setMessages] = useState(MOCK_MESSAGES);
+  const [messages, setMessages] = useState<any[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const [groupOwner, setGroupOwner] = useState<string>('Unknown');
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setGroup(MOCK_GROUP);
-      setTasks(MOCK_TASKS);
-      setResources(MOCK_RESOURCES);
-      setIsLoading(false);
-    }, 800);
-  }, [id]);
+    const fetchGroupData = async () => {
+      if (!id) {
+        console.log('No group ID provided');
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        console.log('Fetching group workspace data for ID:', id);
+        const { data, error } = await getStudyGroupById(id);
+        
+        if (error) {
+          console.error('Error fetching group:', error);
+          addNotification('error', 'Failed to load group details');
+          setGroup(null);
+        } else if (data) {
+          console.log('Group data fetched successfully:', data);
+          setGroup(data);
+          
+          // Find the group owner's name
+          const owner = data.members?.find(member => member.role === 'Owner');
+          if (owner) {
+            setGroupOwner(owner.name);
+          } else {
+            setGroupOwner('Unknown');
+          }
+          
+          // Set mock data for tasks and resources (filtered by group ID)
+          setTasks(MOCK_TASKS.filter(task => task.groupId === id));
+          setResources(MOCK_RESOURCES.filter(resource => resource.groupId === id));
+          
+          // Set mock messages with group context
+          setMessages([
+            { 
+              id: '1', 
+              sender: owner?.name || 'Group Owner', 
+              content: `Welcome to ${data.name}! Ready for our next session?`, 
+              timestamp: new Date(), 
+              userId: data.createdBy 
+            },
+            { 
+              id: '2', 
+              sender: 'Sarah Kim', 
+              content: 'Yes! I\'ve prepared some practice problems', 
+              timestamp: new Date(), 
+              userId: '3' 
+            },
+            { 
+              id: '3', 
+              sender: user?.user_metadata?.full_name || 'You', 
+              content: 'Great! Looking forward to it', 
+              timestamp: new Date(), 
+              userId: user?.id || '1' 
+            },
+          ]);
+        }
+      } catch (error) {
+        console.error('Error fetching group:', error);
+        addNotification('error', 'Failed to load group details');
+        setGroup(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGroupData();
+  }, [id, user, addNotification]);
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
       const message = {
         id: Date.now().toString(),
-        sender: 'You',
+        sender: user?.user_metadata?.full_name || 'You',
         content: newMessage,
         timestamp: new Date(),
-        userId: '1'
+        userId: user?.id || '1'
       };
       setMessages([...messages, message]);
       setNewMessage('');
@@ -184,15 +220,19 @@ export default function GroupWorkspace() {
               <div className="flex items-center space-x-4 text-sm text-neutral-500">
                 <div className="flex items-center">
                   <Users className="w-4 h-4 mr-1" />
-                  {group.members.length} members
+                  {group.memberCount || group.members?.length || 0} members
                 </div>
                 <div className="flex items-center">
                   <Calendar className="w-4 h-4 mr-1" />
-                  {group.schedule.length} sessions/week
+                  {group.schedule?.length || 0} sessions/week
                 </div>
                 <div className="flex items-center">
                   <Target className="w-4 h-4 mr-1" />
                   {group.difficulty}
+                </div>
+                <div className="flex items-center">
+                  <Users className="w-4 h-4 mr-1" />
+                  Owner: {groupOwner}
                 </div>
               </div>
             </div>
@@ -210,15 +250,17 @@ export default function GroupWorkspace() {
 
           {/* Member Avatars */}
           <div className="flex items-center space-x-2">
-            {group.members.map((member) => (
+            {group.members?.map((member) => (
               <div
                 key={member.userId}
                 className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-xs font-medium text-primary-600"
-                title={member.name}
+                title={`${member.name} (${member.role})`}
               >
                 {member.name.charAt(0)}
               </div>
-            ))}
+            )) || (
+              <div className="text-sm text-neutral-500">No members to display</div>
+            )}
           </div>
         </div>
 
@@ -258,23 +300,23 @@ export default function GroupWorkspace() {
                     {messages.map((message) => (
                       <div
                         key={message.id}
-                        className={`flex ${message.userId === '1' ? 'justify-end' : 'justify-start'}`}
+                        className={`flex ${message.userId === user?.id ? 'justify-end' : 'justify-start'}`}
                       >
                         <div
                           className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.userId === '1'
+                            message.userId === user?.id
                               ? 'bg-primary-600 text-white'
                               : 'bg-white border border-neutral-200'
                           }`}
                         >
-                          {message.userId !== '1' && (
+                          {message.userId !== user?.id && (
                             <div className="text-xs font-medium text-neutral-500 mb-1">
                               {message.sender}
                             </div>
                           )}
                           <div className="text-sm">{message.content}</div>
                           <div className={`text-xs mt-1 ${
-                            message.userId === '1' ? 'text-primary-100' : 'text-neutral-400'
+                            message.userId === user?.id ? 'text-primary-100' : 'text-neutral-400'
                           }`}>
                             {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                           </div>
@@ -492,7 +534,7 @@ export default function GroupWorkspace() {
                   
                   <Card className="text-center">
                     <div className="text-2xl font-bold text-accent-600 mb-1">
-                      {group.schedule.length * 4}
+                      {(group.schedule?.length || 0) * 4}
                     </div>
                     <div className="text-sm text-neutral-600">Study Hours/Month</div>
                   </Card>
@@ -508,7 +550,7 @@ export default function GroupWorkspace() {
                     </div>
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm text-neutral-600">Alex uploaded new resource "DP Tutorial"</span>
+                      <span className="text-sm text-neutral-600">{groupOwner} uploaded new resource "DP Tutorial"</span>
                       <span className="text-xs text-neutral-400">1 day ago</span>
                     </div>
                     <div className="flex items-center space-x-3">

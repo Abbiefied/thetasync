@@ -15,13 +15,29 @@ export default function MyGroups() {
 
   useEffect(() => {
     if (user) {
+      console.log('MyGroups: Fetching user groups for:', user.email);
       fetchUserGroups();
     }
   }, [user]);
 
-  // Filter groups based on ownership
-  const joinedGroups = userGroups.filter(group => group.createdBy !== user?.id);
-  const ownedGroups = userGroups.filter(group => group.createdBy === user?.id);
+  // Filter groups based on ownership - FIXED LOGIC
+  const joinedGroups = userGroups.filter(group => {
+    const isOwner = group.createdBy === user?.id;
+    console.log(`Group "${group.name}": createdBy=${group.createdBy}, userId=${user?.id}, isOwner=${isOwner}`);
+    return !isOwner; // Only groups NOT created by the user
+  });
+  
+  const ownedGroups = userGroups.filter(group => {
+    const isOwner = group.createdBy === user?.id;
+    return isOwner; // Only groups created by the user
+  });
+  
+  console.log('MyGroups: Filtering results:', {
+    totalGroups: userGroups.length,
+    joinedGroups: joinedGroups.length,
+    ownedGroups: ownedGroups.length,
+    activeTab
+  });
   
   const displayGroups = activeTab === 'joined' ? joinedGroups : ownedGroups;
 
@@ -33,6 +49,7 @@ export default function MyGroups() {
   };
 
   const handleDeleteGroup = async (groupId: string) => {
+    console.log('Deleting group:', groupId);
     const { error } = await deleteGroup(groupId);
     if (!error) {
       setShowDeleteConfirm(null);
@@ -149,7 +166,7 @@ export default function MyGroups() {
                       <div className="space-y-3 mb-6">
                         <div className="flex items-center text-sm text-neutral-500">
                           <Users className="w-4 h-4 mr-2" />
-                          {group.members?.length || 0} members
+                          {group.memberCount || group.members?.length || 0} members
                         </div>
                         
                         <div className="flex items-center text-sm text-neutral-500">
@@ -221,7 +238,7 @@ export default function MyGroups() {
             
             <Card className="text-center">
               <div className="text-2xl font-bold text-accent-600 mb-1">
-                {userGroups.reduce((acc, group) => acc + (group.members?.length || 0), 0)}
+                {userGroups.reduce((acc, group) => acc + (group.memberCount || group.members?.length || 0), 0)}
               </div>
               <div className="text-sm text-neutral-600">Study Partners</div>
             </Card>
