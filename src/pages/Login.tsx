@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Users, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 import { signIn, signInWithGoogle } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -18,7 +17,6 @@ interface ValidationErrors {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, userProfile, loading } = useAuth();
   const from = location.state?.from?.pathname || '/homepage';
   
   const [data, setData] = useState<LoginData>({
@@ -29,17 +27,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
-  // Handle redirect when user is already authenticated
-  useEffect(() => {
-    if (!loading && user) {
-      if (userProfile) {
-        navigate(from, { replace: true });
-      } else {
-        navigate('/onboarding', { replace: true });
-      }
-    }
-  }, [user, userProfile, loading, navigate, from]);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -89,8 +76,8 @@ export default function Login() {
           // Clear form data on successful login
           setData({ email: '', password: '' });
           
-          // Don't navigate here - let the useEffect handle it
-          console.log('Login successful, auth context will handle navigation');
+          // Navigate immediately - the auth context will handle the rest
+          navigate(from, { replace: true });
         }
       } catch (error) {
         console.error('Login error:', error);
@@ -129,24 +116,6 @@ export default function Login() {
       </div>
     );
   };
-
-  // Show loading while checking auth state
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
-
-  // Don't render login form if user is already authenticated (will redirect)
-  if (user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4">
