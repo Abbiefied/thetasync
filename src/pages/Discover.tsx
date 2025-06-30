@@ -25,7 +25,7 @@ export default function Discover() {
         group.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         group.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
         group.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        group.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+        (group.tags || []).some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
       );
     }
 
@@ -184,7 +184,7 @@ export default function Discover() {
                   </div>
 
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {group.tags.slice(0, 3).map((tag) => (
+                    {(group.tags || []).slice(0, 3).map((tag) => (
                       <span
                         key={tag}
                         className="px-2 py-1 bg-neutral-100 text-neutral-600 rounded-md text-xs"
@@ -192,9 +192,9 @@ export default function Discover() {
                         {tag}
                       </span>
                     ))}
-                    {group.tags.length > 3 && (
+                    {(group.tags || []).length > 3 && (
                       <span className="px-2 py-1 bg-neutral-100 text-neutral-600 rounded-md text-xs">
-                        +{group.tags.length - 3} more
+                        +{(group.tags || []).length - 3} more
                       </span>
                     )}
                   </div>
