@@ -238,7 +238,7 @@ export default function SignUp() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-2 text-primary-600 font-bold text-2xl mb-4">
               <Users className="w-8 h-8" />
-              <span>StudyCircle</span>
+              <span>ThetaSync</span>
             </div>
             <h1 className="text-2xl font-bold text-neutral-900 mb-2">Create Your Account</h1>
             <p className="text-neutral-600">Join thousands of students learning together</p>

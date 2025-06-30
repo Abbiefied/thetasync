@@ -141,7 +141,7 @@ export default function Login() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-2 text-primary-600 font-bold text-2xl mb-4">
               <Users className="w-8 h-8" />
-              <span>StudyCircle</span>
+              <span>ThetaSync</span>
             </div>
             <h1 className="text-2xl font-bold text-neutral-900 mb-2">Welcome Back</h1>
             <p className="text-neutral-600">Sign in to your account to continue learning</p>
@@ -302,7 +302,7 @@ export default function Login() {
           <div className="mt-6 p-4 bg-neutral-50 rounded-lg">
             <h4 className="text-sm font-medium text-neutral-700 mb-2">Demo Credentials</h4>
             <div className="text-sm text-neutral-600 space-y-1">
-              <p><strong>Email:</strong> demo@studycircle.com</p>
+              <p><strong>Email:</strong> demo@thetasync.com</p>
               <p><strong>Password:</strong> Demo123!</p>
             </div>
           </div>

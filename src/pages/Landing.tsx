@@ -32,14 +32,14 @@ export default function Landing() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 relative">
       {/* Header */}
       <header className="relative z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2 text-primary-600 font-bold text-xl">
               <Users className="w-8 h-8" />
-              <span>StudyCircle</span>
+              <span>ThetaSync</span>
             </div>
             <nav className="hidden md:flex space-x-8">
               <a href="#features" className="text-neutral-600 hover:text-primary-600 font-medium transition-colors">Features</a>
@@ -61,58 +61,56 @@ export default function Landing() {
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-16 pb-32 overflow-hidden">
+      {/* Hero Image - Fixed position at top right */}
+      <div className="fixed top-20 right-8 z-20">
+        <a 
+          href="https://bolt.new" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="block hover:scale-105 transition-transform duration-300"
+        >
+          <img
+            src="/src/assets/white_circle_360x360.png"
+            alt="Built on Bolt"
+            className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain animate-fade-in hover:opacity-90 transition-opacity"
+            style={{ animationDelay: '0.3s' }}
+          />
+        </a>
+      </div>
+
+      {/* Hero Section - Centered */}
+      <section className="relative pt-16 pb-32 overflow-hidden min-h-screen flex items-center justify-center">
         <div className="absolute inset-0 bg-gradient-to-r from-primary-600/10 to-secondary-600/10"></div>
-        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            {/* Left Column - Text Content */}
-            <div className="text-center lg:text-left">
-              <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-neutral-900 mb-6 animate-fade-in">
-                Find Your Circle
-              </h1>
-              <p className="text-xl md:text-2xl text-neutral-600 mb-4 animate-slide-up">
-                Where Great Minds Learn Alike
-              </p>
-              <p className="text-lg text-neutral-500 mb-12 max-w-2xl mx-auto lg:mx-0 animate-slide-up">
-                Connect with like-minded students, form study groups, and achieve academic success together. 
-                Join thousands of students already learning smarter, not harder.
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center animate-slide-up">
-                <Link to="/signup">
-                  <Button size="lg" className="group">
-                    Get Started Free
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </Link>
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          {/* Main Content - Centered */}
+          <div>
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-neutral-900 mb-6 animate-fade-in">
+              Find Your Circle
+            </h1>
+            <p className="text-xl md:text-2xl text-neutral-600 mb-4 animate-slide-up">
+              Where Great Minds Learn Alike
+            </p>
+            <p className="text-lg text-neutral-500 mb-12 max-w-3xl mx-auto animate-slide-up">
+              Connect with like-minded students, form study groups, and achieve academic success together. 
+              Join thousands of students already learning smarter, not harder.
+            </p>
+            
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-slide-up">
+              <Link to="/signup">
+                <Button size="lg" className="group">
+                  Get Started Free
+                  <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                </Button>
+              </Link>
+              <a 
+                href="https://youtube.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
                 <Button variant="outline" size="lg">
                   Watch Demo
                 </Button>
-              </div>
-            </div>
-
-            {/* Right Column - Hero Image */}
-            <div className="flex justify-center lg:justify-end">
-              <div className="relative">
-                <a 
-                  href="https://bolt.new" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="block hover:scale-105 transition-transform duration-300"
-                >
-                  <img
-                    src="/src/assets/white_circle_360x360.png"
-                    alt="Built on Bolt"
-                    className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain animate-fade-in hover:opacity-90 transition-opacity"
-                    style={{ animationDelay: '0.3s' }}
-                  />
-                </a>
-                {/* Floating elements for visual interest */}
-                <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary-200 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-                <div className="absolute -bottom-3 -right-3 w-6 h-6 bg-secondary-200 rounded-full animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-                <div className="absolute top-1/4 -right-4 w-3 h-3 bg-accent-200 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
-              </div>
+              </a>
             </div>
           </div>
 
@@ -140,7 +138,7 @@ export default function Landing() {
 
       {/* Features Section */}
       <section id="features" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-neutral-900 mb-4">
               Everything You Need to Study Better
@@ -222,7 +220,7 @@ export default function Landing() {
               Get Started in 3 Simple Steps
             </h2>
             <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-              Join StudyCircle and start your collaborative learning journey today.
+              Join ThetaSync and start your collaborative learning journey today.
             </p>
           </div>
 
@@ -262,13 +260,13 @@ export default function Landing() {
 
       {/* Testimonials Section */}
       <section id="testimonials" className="py-24 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-8 sm:px-12 lg:px-16">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-neutral-900 mb-4">
               What Students Are Saying
             </h2>
             <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-              Join thousands of students who have improved their academic performance with StudyCircle.
+              Join thousands of students who have improved their academic performance with ThetaSync.
             </p>
           </div>
 
@@ -280,7 +278,7 @@ export default function Landing() {
                 ))}
               </div>
               <p className="text-neutral-600 mb-6 italic">
-                "StudyCircle helped me find the perfect study group for my computer science courses. My grades improved by 15% in just one semester!"
+                "ThetaSync helped me find the perfect study group for my computer science courses. My grades improved by 15% in just one semester!"
               </p>
               <div className="text-sm">
                 <div className="font-semibold text-neutral-900">Alex Chen</div>
@@ -310,7 +308,7 @@ export default function Landing() {
                 ))}
               </div>
               <p className="text-neutral-600 mb-6 italic">
-                "I was struggling with organic chemistry until I joined a StudyCircle group. The peer support and shared knowledge made all the difference."
+                "I was struggling with organic chemistry until I joined a ThetaSync group. The peer support and shared knowledge made all the difference."
               </p>
               <div className="text-sm">
                 <div className="font-semibold text-neutral-900">David Kim</div>
