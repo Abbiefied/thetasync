@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Users, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 import { signIn, signInWithGoogle } from '../lib/supabase';
@@ -30,9 +30,10 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
 
-  // Redirect if already authenticated
-  React.useEffect(() => {
+  // Redirect if already authenticated - but only after loading is complete
+  useEffect(() => {
     if (!loading && user) {
+      console.log('User already authenticated, checking profile...');
       if (userProfile) {
         console.log('User already logged in with profile, redirecting to:', from);
         navigate(from, { replace: true });
@@ -137,13 +138,26 @@ export default function Login() {
     );
   };
 
-  // Show loading while checking auth state
+  // Show loading only if we're still checking auth state AND we don't have a definitive answer
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
           <p className="text-neutral-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // If user is already authenticated, don't render the login form
+  // The useEffect will handle the redirect
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-neutral-600">Redirecting...</p>
         </div>
       </div>
     );
