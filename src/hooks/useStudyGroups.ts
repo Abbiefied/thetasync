@@ -44,24 +44,6 @@ export function useStudyGroups() {
     }
   };
 
-  // Fetch single group by ID
-  const fetchGroupById = async (groupId: string) => {
-    setIsLoading(true);
-    try {
-      const { data, error } = await api.getStudyGroupById(groupId);
-      if (error) throw error;
-      
-      dispatch({ type: 'SET_CURRENT_GROUP', payload: data });
-      return { data, error: null };
-    } catch (error) {
-      console.error('Error fetching group:', error);
-      addNotification('error', 'Failed to load group details');
-      return { data: null, error };
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   // Create a new study group
   const createGroup = async (groupData: {
     name: string;
@@ -73,11 +55,6 @@ export function useStudyGroups() {
     tags: string[];
     schedules: Array<{ day: string; start_time: string; end_time: string }>;
   }) => {
-    if (!user) {
-      addNotification('error', 'You must be logged in to create a group');
-      return { data: null, error: new Error('Not authenticated') };
-    }
-
     setIsLoading(true);
     try {
       const { data, error } = await api.createStudyGroup(groupData);
@@ -96,15 +73,7 @@ export function useStudyGroups() {
   };
 
   // Update a study group
-  const updateGroup = async (groupId: string, updates: {
-    name?: string;
-    subject?: string;
-    description?: string;
-    max_members?: number;
-    difficulty?: 'Beginner' | 'Intermediate' | 'Advanced';
-    is_private?: boolean;
-    tags?: string[];
-  }) => {
+  const updateGroup = async (groupId: string, updates: Partial<StudyGroup>) => {
     setIsLoading(true);
     try {
       const { data, error } = await api.updateStudyGroup(groupId, updates);
@@ -143,29 +112,18 @@ export function useStudyGroups() {
 
   // Join a study group
   const joinGroup = async (groupId: string, expertise: 'Beginner' | 'Intermediate' | 'Advanced') => {
-    if (!user) {
-      addNotification('error', 'You must be logged in to join a group');
-      return { data: null, error: new Error('Not authenticated') };
-    }
-
     setIsLoading(true);
     try {
       const { data, error } = await api.joinStudyGroup(groupId, expertise);
       if (error) throw error;
       
-      // Refresh user groups and current group
+      // Refresh user groups
       await fetchUserGroups();
-      await fetchGroupById(groupId);
-      
       addNotification('success', 'Successfully joined the study group!');
       return { data, error: null };
     } catch (error) {
       console.error('Error joining group:', error);
-      if (error.message?.includes('duplicate')) {
-        addNotification('error', 'You are already a member of this group');
-      } else {
-        addNotification('error', 'Failed to join study group');
-      }
+      addNotification('error', 'Failed to join study group');
       return { data: null, error };
     } finally {
       setIsLoading(false);
@@ -174,11 +132,6 @@ export function useStudyGroups() {
 
   // Leave a study group
   const leaveGroup = async (groupId: string) => {
-    if (!user) {
-      addNotification('error', 'You must be logged in to leave a group');
-      return { error: new Error('Not authenticated') };
-    }
-
     setIsLoading(true);
     try {
       const { error } = await api.leaveStudyGroup(groupId);
@@ -197,22 +150,6 @@ export function useStudyGroups() {
     }
   };
 
-  // Check if user can manage group (is owner or admin)
-  const canManageGroup = (group: StudyGroup) => {
-    if (!user || !group) return false;
-    
-    const userMember = group.members?.find(member => member.userId === user.id);
-    return userMember?.role === 'Owner' || userMember?.role === 'Admin';
-  };
-
-  // Check if user is group owner
-  const isGroupOwner = (group: StudyGroup) => {
-    if (!user || !group) return false;
-    
-    const userMember = group.members?.find(member => member.userId === user.id);
-    return userMember?.role === 'Owner';
-  };
-
   return {
     studyGroups: state.studyGroups,
     userGroups: state.userGroups,
@@ -220,13 +157,10 @@ export function useStudyGroups() {
     isLoading,
     fetchPublicGroups,
     fetchUserGroups,
-    fetchGroupById,
     createGroup,
     updateGroup,
     deleteGroup,
     joinGroup,
-    leaveGroup,
-    canManageGroup,
-    isGroupOwner
+    leaveGroup
   };
 }

@@ -1,49 +1,56 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Users, Calendar, Clock, Star, ArrowLeft, MessageCircle } from 'lucide-react';
-import { useStudyGroups } from '../hooks/useStudyGroups';
-import { useAuth } from '../context/AuthContext';
 import { StudyGroup } from '../types';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
+const MOCK_GROUP: StudyGroup = {
+  id: '1',
+  name: 'Advanced Algorithms Study Circle',
+  subject: 'Computer Science',
+  description: 'Deep dive into complex algorithms and data structures. Perfect for preparing for technical interviews. We focus on understanding the theory behind algorithms and implementing them in various programming languages. Our sessions include problem-solving, code reviews, and mock interviews.',
+  members: [
+    { userId: '2', name: 'Alex Chen', role: 'Owner', expertise: 'Advanced', joinedAt: new Date('2024-01-15') },
+    { userId: '3', name: 'Sarah Kim', role: 'Member', expertise: 'Intermediate', joinedAt: new Date('2024-01-18') },
+    { userId: '4', name: 'Mike Johnson', role: 'Member', expertise: 'Advanced', joinedAt: new Date('2024-01-20') }
+  ],
+  maxMembers: 8,
+  schedule: [
+    { day: 'Tuesday', startTime: '19:00', endTime: '21:00' },
+    { day: 'Thursday', startTime: '19:00', endTime: '21:00' }
+  ],
+  tags: ['Algorithms', 'Data Structures', 'Interview Prep', 'Problem Solving'],
+  difficulty: 'Advanced',
+  isPrivate: false,
+  createdBy: '2',
+  createdAt: new Date('2024-01-15')
+};
+
 export default function JoinGroup() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { fetchGroupById, joinGroup, isLoading } = useStudyGroups();
   const [group, setGroup] = useState<StudyGroup | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [joinMessage, setJoinMessage] = useState('');
-  const [selectedExpertise, setSelectedExpertise] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Intermediate');
 
   useEffect(() => {
-    if (id) {
-      loadGroup();
-    }
+    // Simulate API call to fetch group details
+    setTimeout(() => {
+      setGroup(MOCK_GROUP);
+      setIsLoading(false);
+    }, 800);
   }, [id]);
 
-  const loadGroup = async () => {
-    if (!id) return;
-    
-    const { data } = await fetchGroupById(id);
-    if (data) {
-      setGroup(data);
-    }
-  };
-
   const handleJoinGroup = async () => {
-    if (!id || !user) return;
-    
     setIsJoining(true);
     
-    const { error } = await joinGroup(id, selectedExpertise);
-    
-    if (!error) {
-      navigate('/my-groups');
-    }
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 1500));
     
     setIsJoining(false);
+    navigate('/my-groups');
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -58,11 +65,6 @@ export default function JoinGroup() {
   const getScheduleText = (schedule: StudyGroup['schedule']) => {
     if (schedule.length === 0) return 'No scheduled meetings';
     return schedule.map(slot => `${slot.day}s ${slot.startTime}-${slot.endTime}`).join(', ');
-  };
-
-  const isUserAlreadyMember = () => {
-    if (!user || !group) return false;
-    return group.members.some(member => member.userId === user.id);
   };
 
   if (isLoading) {
@@ -98,7 +100,6 @@ export default function JoinGroup() {
   }
 
   const isGroupFull = group.members.length >= group.maxMembers;
-  const isAlreadyMember = isUserAlreadyMember();
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-8">
@@ -203,14 +204,9 @@ export default function JoinGroup() {
                 <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-primary-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
-                  {isAlreadyMember ? 'You\'re a Member!' : 'Join This Group'}
-                </h3>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Join This Group</h3>
                 <p className="text-neutral-600 text-sm">
-                  {isAlreadyMember 
-                    ? 'You are already a member of this group.'
-                    : `Connect with ${group.members.length} other students and start learning together.`
-                  }
+                  Connect with {group.members.length} other students and start learning together.
                 </p>
               </div>
 
@@ -240,69 +236,32 @@ export default function JoinGroup() {
                 </div>
               </div>
 
-              {!isAlreadyMember && !group.isPrivate && (
-                <>
-                  <div className="mb-6">
-                    <label className="block text-sm font-medium text-neutral-700 mb-3">
-                      Your Expertise Level
-                    </label>
-                    <div className="space-y-2">
-                      {(['Beginner', 'Intermediate', 'Advanced'] as const).map((level) => (
-                        <button
-                          key={level}
-                          onClick={() => setSelectedExpertise(level)}
-                          className={`w-full p-3 text-left rounded-lg border transition-all ${
-                            selectedExpertise === level
-                              ? 'bg-primary-50 border-primary-300 text-primary-700'
-                              : 'bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300'
-                          }`}
-                        >
-                          <div className="font-medium">{level}</div>
-                          <div className="text-xs text-neutral-500 mt-1">
-                            {level === 'Beginner' && 'New to this subject'}
-                            {level === 'Intermediate' && 'Some experience'}
-                            {level === 'Advanced' && 'Strong foundation'}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="mb-6">
-                    <label htmlFor="joinMessage" className="block text-sm font-medium text-neutral-700 mb-2">
-                      Introduction Message (Optional)
-                    </label>
-                    <textarea
-                      id="joinMessage"
-                      value={joinMessage}
-                      onChange={(e) => setJoinMessage(e.target.value)}
-                      rows={3}
-                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none"
-                      placeholder="Tell the group about yourself and why you'd like to join..."
-                    />
-                  </div>
-                </>
+              {!group.isPrivate && (
+                <div className="mb-6">
+                  <label htmlFor="joinMessage" className="block text-sm font-medium text-neutral-700 mb-2">
+                    Introduction Message (Optional)
+                  </label>
+                  <textarea
+                    id="joinMessage"
+                    value={joinMessage}
+                    onChange={(e) => setJoinMessage(e.target.value)}
+                    rows={3}
+                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none"
+                    placeholder="Tell the group about yourself and why you'd like to join..."
+                  />
+                </div>
               )}
 
-              {isAlreadyMember ? (
-                <Button
-                  onClick={() => navigate(`/group/${group.id}`)}
-                  className="w-full"
-                >
-                  Go to Group
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleJoinGroup}
-                  disabled={isGroupFull}
-                  isLoading={isJoining}
-                  className="w-full"
-                >
-                  {isGroupFull ? 'Group Full' : 'Join Group'}
-                </Button>
-              )}
+              <Button
+                onClick={handleJoinGroup}
+                disabled={isGroupFull}
+                isLoading={isJoining}
+                className="w-full"
+              >
+                {isGroupFull ? 'Group Full' : 'Join Group'}
+              </Button>
 
-              {isGroupFull && !isAlreadyMember && (
+              {isGroupFull && (
                 <p className="text-sm text-neutral-500 text-center mt-3">
                   This group has reached its maximum capacity. You can still bookmark it or check back later.
                 </p>

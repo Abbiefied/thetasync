@@ -3,14 +3,61 @@ import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   MessageCircle, Users, BookOpen, CheckSquare, Video, 
   Plus, Send, Paperclip, MoreVertical, Clock, Trophy,
-  Search, Filter, Star, Calendar, Target, ArrowLeft, Edit, Trash2
+  Search, Filter, Star, Calendar, Target, ArrowLeft
 } from 'lucide-react';
-import { useStudyGroups } from '../hooks/useStudyGroups';
-import { useTasks } from '../hooks/useTasks';
-import { useAuth } from '../context/AuthContext';
 import { StudyGroup, Task, Resource, Quiz } from '../types';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
+
+const MOCK_GROUP: StudyGroup = {
+  id: '1',
+  name: 'Advanced Algorithms Study Circle',
+  subject: 'Computer Science',
+  description: 'Deep dive into complex algorithms and data structures. Perfect for preparing for technical interviews.',
+  members: [
+    { userId: '1', name: 'You', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() },
+    { userId: '2', name: 'Alex Chen', role: 'Owner', expertise: 'Advanced', joinedAt: new Date() },
+    { userId: '3', name: 'Sarah Kim', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() },
+    { userId: '4', name: 'Mike Johnson', role: 'Member', expertise: 'Advanced', joinedAt: new Date() }
+  ],
+  maxMembers: 8,
+  schedule: [
+    { day: 'Tuesday', startTime: '19:00', endTime: '21:00' },
+    { day: 'Thursday', startTime: '19:00', endTime: '21:00' }
+  ],
+  tags: ['Algorithms', 'Data Structures', 'Interview Prep'],
+  difficulty: 'Advanced',
+  isPrivate: false,
+  createdBy: '2',
+  createdAt: new Date('2024-01-15')
+};
+
+const MOCK_TASKS: Task[] = [
+  {
+    id: '1',
+    title: 'Complete Binary Search Tree Implementation',
+    description: 'Implement a balanced BST with insertion, deletion, and search operations',
+    assignedTo: ['1', '3'],
+    dueDate: new Date('2025-01-20'),
+    status: 'in-progress',
+    priority: 'high',
+    groupId: '1',
+    createdBy: '2',
+    createdAt: new Date()
+  },
+  {
+    id: '2',
+    title: 'Study Dynamic Programming Chapter',
+    description: 'Read and summarize key concepts from DP chapter',
+    assignedTo: ['1', '2', '3', '4'],
+    dueDate: new Date('2025-01-18'),
+    status: 'pending',
+    priority: 'medium',
+    groupId: '1',
+    createdBy: '2',
+    createdAt: new Date()
+  }
+];
 
 const MOCK_RESOURCES: Resource[] = [
   {
@@ -48,51 +95,23 @@ type TabType = 'chat' | 'tasks' | 'resources' | 'quizzes' | 'progress';
 export default function GroupWorkspace() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { fetchGroupById, canManageGroup, isGroupOwner } = useStudyGroups();
-  const { tasks, fetchGroupTasks, createTask, updateTask, deleteTask, toggleTaskCompletion, canEditTask, canDeleteTask, isLoading: tasksLoading } = useTasks();
-  
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [group, setGroup] = useState<StudyGroup | null>(null);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
   const [messages, setMessages] = useState(MOCK_MESSAGES);
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [showTaskForm, setShowTaskForm] = useState(false);
-  const [newTask, setNewTask] = useState({
-    title: '',
-    description: '',
-    assignedTo: [] as string[],
-    dueDate: '',
-    priority: 'medium' as 'low' | 'medium' | 'high'
-  });
 
   useEffect(() => {
-    if (id) {
-      loadGroupData();
-    }
+    // Simulate API call
+    setTimeout(() => {
+      setGroup(MOCK_GROUP);
+      setTasks(MOCK_TASKS);
+      setResources(MOCK_RESOURCES);
+      setIsLoading(false);
+    }, 800);
   }, [id]);
-
-  const loadGroupData = async () => {
-    if (!id) return;
-    
-    setIsLoading(true);
-    
-    // Load group details
-    const { fetchGroupById: fetchGroup } = useStudyGroups();
-    const { data: groupData } = await fetchGroup(id);
-    if (groupData) {
-      setGroup(groupData);
-    }
-    
-    // Load group tasks
-    await fetchGroupTasks(id);
-    
-    // Load mock resources
-    setResources(MOCK_RESOURCES);
-    
-    setIsLoading(false);
-  };
 
   const handleSendMessage = () => {
     if (newMessage.trim()) {
@@ -105,48 +124,6 @@ export default function GroupWorkspace() {
       };
       setMessages([...messages, message]);
       setNewMessage('');
-    }
-  };
-
-  const handleCreateTask = async () => {
-    if (!id || !newTask.title.trim()) return;
-    
-    const taskData = {
-      title: newTask.title,
-      description: newTask.description,
-      group_id: id,
-      assigned_to: newTask.assignedTo,
-      due_date: newTask.dueDate || undefined,
-      priority: newTask.priority
-    };
-    
-    const { error } = await createTask(taskData);
-    
-    if (!error) {
-      setShowTaskForm(false);
-      setNewTask({
-        title: '',
-        description: '',
-        assignedTo: [],
-        dueDate: '',
-        priority: 'medium'
-      });
-      // Refresh tasks
-      await fetchGroupTasks(id);
-    }
-  };
-
-  const handleToggleTask = async (task: Task) => {
-    await toggleTaskCompletion(task.id, task.status);
-    // Refresh tasks
-    if (id) await fetchGroupTasks(id);
-  };
-
-  const handleDeleteTask = async (taskId: string) => {
-    if (window.confirm('Are you sure you want to delete this task?')) {
-      await deleteTask(taskId);
-      // Refresh tasks
-      if (id) await fetchGroupTasks(id);
     }
   };
 
@@ -164,10 +141,6 @@ export default function GroupWorkspace() {
       case 'in-progress': return 'bg-blue-100 text-blue-700';
       case 'pending': return 'bg-gray-100 text-gray-700';
     }
-  };
-
-  const getTasksByStatus = (status: Task['status']) => {
-    return tasks.filter(task => task.status === status);
   };
 
   if (isLoading) {
@@ -238,12 +211,9 @@ export default function GroupWorkspace() {
                 <Video className="w-4 h-4 mr-2" />
                 Start Call
               </Button>
-              {canManageGroup(group) && (
-                <Button variant="outline" size="sm">
-                  <Edit className="w-4 h-4 mr-2" />
-                  Edit Group
-                </Button>
-              )}
+              <Button variant="outline" size="sm">
+                <MoreVertical className="w-4 h-4" />
+              </Button>
             </div>
           </div>
 
@@ -344,125 +314,35 @@ export default function GroupWorkspace() {
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-neutral-900">Group Tasks</h3>
-                  <Button size="sm" onClick={() => setShowTaskForm(true)}>
+                  <Button size="sm">
                     <Plus className="w-4 h-4 mr-2" />
                     Add Task
                   </Button>
                 </div>
-
-                {/* Task Creation Form */}
-                {showTaskForm && (
-                  <Card className="p-4 border-l-4 border-l-primary-500">
-                    <h4 className="font-medium text-neutral-900 mb-4">Create New Task</h4>
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-1">
-                          Task Title *
-                        </label>
-                        <input
-                          type="text"
-                          value={newTask.title}
-                          onChange={(e) => setNewTask(prev => ({ ...prev, title: e.target.value }))}
-                          className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          placeholder="Enter task title..."
-                        />
-                      </div>
-                      
-                      <div>
-                        <label className="block text-sm font-medium text-neutral-700 mb-1">
-                          Description
-                        </label>
-                        <textarea
-                          value={newTask.description}
-                          onChange={(e) => setNewTask(prev => ({ ...prev, description: e.target.value }))}
-                          rows={3}
-                          className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent resize-none"
-                          placeholder="Enter task description..."
-                        />
-                      </div>
-                      
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-neutral-700 mb-1">
-                            Due Date
-                          </label>
-                          <input
-                            type="datetime-local"
-                            value={newTask.dueDate}
-                            onChange={(e) => setNewTask(prev => ({ ...prev, dueDate: e.target.value }))}
-                            className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          />
-                        </div>
-                        
-                        <div>
-                          <label className="block text-sm font-medium text-neutral-700 mb-1">
-                            Priority
-                          </label>
-                          <select
-                            value={newTask.priority}
-                            onChange={(e) => setNewTask(prev => ({ ...prev, priority: e.target.value as any }))}
-                            className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                          >
-                            <option value="low">Low</option>
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                          </select>
-                        </div>
-                      </div>
-                      
-                      <div className="flex space-x-3">
-                        <Button onClick={handleCreateTask} disabled={!newTask.title.trim()}>
-                          Create Task
-                        </Button>
-                        <Button variant="outline" onClick={() => setShowTaskForm(false)}>
-                          Cancel
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                )}
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div>
                     <h4 className="font-medium text-neutral-700 mb-3">To Do</h4>
                     <div className="space-y-3">
-                      {getTasksByStatus('pending').map((task) => (
+                      {tasks.filter(task => task.status === 'pending').map((task) => (
                         <Card key={task.id} className="p-4">
                           <div className="flex items-start justify-between mb-2">
                             <h5 className="font-medium text-neutral-900 text-sm">{task.title}</h5>
-                            <div className="flex items-center space-x-1">
-                              <span className={`px-2 py-1 rounded-full text-xs border ${getPriorityColor(task.priority)}`}>
-                                {task.priority}
-                              </span>
-                              {canDeleteTask(task) && (
-                                <button
-                                  onClick={() => handleDeleteTask(task.id)}
-                                  className="p-1 text-neutral-400 hover:text-red-600 transition-colors"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              )}
-                            </div>
+                            <span className={`px-2 py-1 rounded-full text-xs border ${getPriorityColor(task.priority)}`}>
+                              {task.priority}
+                            </span>
                           </div>
                           <p className="text-xs text-neutral-600 mb-3">{task.description}</p>
-                          <div className="flex items-center justify-between text-xs text-neutral-500 mb-3">
+                          <div className="flex items-center justify-between text-xs text-neutral-500">
                             <div className="flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
-                              {task.dueDate?.toLocaleDateString() || 'No due date'}
+                              {task.dueDate.toLocaleDateString()}
                             </div>
                             <div className="flex items-center">
                               <Users className="w-3 h-3 mr-1" />
-                              {task.assignedTo?.length || 0}
+                              {task.assignedTo.length}
                             </div>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleToggleTask(task)}
-                            className="w-full"
-                          >
-                            Mark Complete
-                          </Button>
                         </Card>
                       ))}
                     </div>
@@ -471,43 +351,25 @@ export default function GroupWorkspace() {
                   <div>
                     <h4 className="font-medium text-neutral-700 mb-3">In Progress</h4>
                     <div className="space-y-3">
-                      {getTasksByStatus('in-progress').map((task) => (
+                      {tasks.filter(task => task.status === 'in-progress').map((task) => (
                         <Card key={task.id} className="p-4 border-l-4 border-l-blue-500">
                           <div className="flex items-start justify-between mb-2">
                             <h5 className="font-medium text-neutral-900 text-sm">{task.title}</h5>
-                            <div className="flex items-center space-x-1">
-                              <span className={`px-2 py-1 rounded-full text-xs border ${getPriorityColor(task.priority)}`}>
-                                {task.priority}
-                              </span>
-                              {canDeleteTask(task) && (
-                                <button
-                                  onClick={() => handleDeleteTask(task.id)}
-                                  className="p-1 text-neutral-400 hover:text-red-600 transition-colors"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              )}
-                            </div>
+                            <span className={`px-2 py-1 rounded-full text-xs border ${getPriorityColor(task.priority)}`}>
+                              {task.priority}
+                            </span>
                           </div>
                           <p className="text-xs text-neutral-600 mb-3">{task.description}</p>
-                          <div className="flex items-center justify-between text-xs text-neutral-500 mb-3">
+                          <div className="flex items-center justify-between text-xs text-neutral-500">
                             <div className="flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
-                              {task.dueDate?.toLocaleDateString() || 'No due date'}
+                              {task.dueDate.toLocaleDateString()}
                             </div>
                             <div className="flex items-center">
                               <Users className="w-3 h-3 mr-1" />
-                              {task.assignedTo?.length || 0}
+                              {task.assignedTo.length}
                             </div>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => handleToggleTask(task)}
-                            className="w-full"
-                          >
-                            Mark Complete
-                          </Button>
                         </Card>
                       ))}
                     </div>
@@ -516,43 +378,25 @@ export default function GroupWorkspace() {
                   <div>
                     <h4 className="font-medium text-neutral-700 mb-3">Completed</h4>
                     <div className="space-y-3">
-                      {getTasksByStatus('completed').map((task) => (
+                      {tasks.filter(task => task.status === 'completed').map((task) => (
                         <Card key={task.id} className="p-4 opacity-75">
                           <div className="flex items-start justify-between mb-2">
                             <h5 className="font-medium text-neutral-900 text-sm">{task.title}</h5>
-                            <div className="flex items-center space-x-1">
-                              <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
-                                Done
-                              </span>
-                              {canDeleteTask(task) && (
-                                <button
-                                  onClick={() => handleDeleteTask(task.id)}
-                                  className="p-1 text-neutral-400 hover:text-red-600 transition-colors"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
-                              )}
-                            </div>
+                            <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-700">
+                              Done
+                            </span>
                           </div>
                           <p className="text-xs text-neutral-600 mb-3">{task.description}</p>
-                          <div className="flex items-center justify-between text-xs text-neutral-500 mb-3">
+                          <div className="flex items-center justify-between text-xs text-neutral-500">
                             <div className="flex items-center">
                               <Clock className="w-3 h-3 mr-1" />
-                              {task.dueDate?.toLocaleDateString() || 'No due date'}
+                              {task.dueDate.toLocaleDateString()}
                             </div>
                             <div className="flex items-center">
                               <Users className="w-3 h-3 mr-1" />
-                              {task.assignedTo?.length || 0}
+                              {task.assignedTo.length}
                             </div>
                           </div>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleToggleTask(task)}
-                            className="w-full"
-                          >
-                            Mark Pending
-                          </Button>
                         </Card>
                       ))}
                     </div>
@@ -643,7 +487,7 @@ export default function GroupWorkspace() {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <Card className="text-center">
                     <div className="text-2xl font-bold text-primary-600 mb-1">
-                      {getTasksByStatus('completed').length}
+                      {tasks.filter(t => t.status === 'completed').length}
                     </div>
                     <div className="text-sm text-neutral-600">Tasks Completed</div>
                   </Card>
@@ -668,12 +512,12 @@ export default function GroupWorkspace() {
                   <div className="space-y-3">
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                      <span className="text-sm text-neutral-600">Task completed: "{getTasksByStatus('completed')[0]?.title || 'No completed tasks'}"</span>
+                      <span className="text-sm text-neutral-600">Sarah completed "Binary Search Tree Implementation"</span>
                       <span className="text-xs text-neutral-400">2 hours ago</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
-                      <span className="text-sm text-neutral-600">New resource uploaded</span>
+                      <span className="text-sm text-neutral-600">Alex uploaded new resource "DP Tutorial"</span>
                       <span className="text-xs text-neutral-400">1 day ago</span>
                     </div>
                     <div className="flex items-center space-x-3">

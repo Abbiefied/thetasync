@@ -35,38 +35,13 @@ export const getPublicStudyGroups = async () => {
     .from('study_groups')
     .select(`
       *,
-      group_members!inner(
-        id,
-        user_id,
-        role,
-        expertise,
-        joined_at,
-        user_profiles(name, email)
-      ),
+      group_members!inner(count),
       group_schedules(*)
     `)
     .eq('is_private', false)
     .order('created_at', { ascending: false });
   
-  // Transform the data to match our StudyGroup interface
-  const transformedData = data?.map(group => ({
-    ...group,
-    members: group.group_members?.map(member => ({
-      userId: member.user_id,
-      name: member.user_profiles?.name || 'Unknown',
-      role: member.role,
-      expertise: member.expertise,
-      joinedAt: new Date(member.joined_at)
-    })) || [],
-    schedule: group.group_schedules?.map(schedule => ({
-      day: schedule.day,
-      startTime: schedule.start_time,
-      endTime: schedule.end_time
-    })) || [],
-    createdAt: new Date(group.created_at)
-  }));
-  
-  return { data: transformedData, error };
+  return { data, error };
 };
 
 export const getUserStudyGroups = async (userId: string) => {
@@ -75,37 +50,18 @@ export const getUserStudyGroups = async (userId: string) => {
     .select(`
       *,
       group_members!inner(
-        id,
         user_id,
         role,
         expertise,
         joined_at,
-        user_profiles(name, email)
+        user_profiles(name)
       ),
       group_schedules(*)
     `)
     .eq('group_members.user_id', userId)
     .order('created_at', { ascending: false });
   
-  // Transform the data to match our StudyGroup interface
-  const transformedData = data?.map(group => ({
-    ...group,
-    members: group.group_members?.map(member => ({
-      userId: member.user_id,
-      name: member.user_profiles?.name || 'Unknown',
-      role: member.role,
-      expertise: member.expertise,
-      joinedAt: new Date(member.joined_at)
-    })) || [],
-    schedule: group.group_schedules?.map(schedule => ({
-      day: schedule.day,
-      startTime: schedule.start_time,
-      endTime: schedule.end_time
-    })) || [],
-    createdAt: new Date(group.created_at)
-  }));
-  
-  return { data: transformedData, error };
+  return { data, error };
 };
 
 export const getStudyGroupById = async (groupId: string) => {
@@ -114,7 +70,6 @@ export const getStudyGroupById = async (groupId: string) => {
     .select(`
       *,
       group_members(
-        id,
         user_id,
         role,
         expertise,
@@ -126,27 +81,7 @@ export const getStudyGroupById = async (groupId: string) => {
     .eq('id', groupId)
     .single();
   
-  if (error) return { data: null, error };
-  
-  // Transform the data to match our StudyGroup interface
-  const transformedData = {
-    ...data,
-    members: data.group_members?.map(member => ({
-      userId: member.user_id,
-      name: member.user_profiles?.name || 'Unknown',
-      role: member.role,
-      expertise: member.expertise,
-      joinedAt: new Date(member.joined_at)
-    })) || [],
-    schedule: data.group_schedules?.map(schedule => ({
-      day: schedule.day,
-      startTime: schedule.start_time,
-      endTime: schedule.end_time
-    })) || [],
-    createdAt: new Date(data.created_at)
-  };
-  
-  return { data: transformedData, error: null };
+  return { data, error };
 };
 
 export const createStudyGroup = async (groupData: {
@@ -159,9 +94,6 @@ export const createStudyGroup = async (groupData: {
   tags: string[];
   schedules: Array<{ day: string; start_time: string; end_time: string }>;
 }) => {
-  const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { data: null, error: new Error('User not authenticated') };
-
   const { data: group, error: groupError } = await supabase
     .from('study_groups')
     .insert({
@@ -172,7 +104,7 @@ export const createStudyGroup = async (groupData: {
       difficulty: groupData.difficulty,
       is_private: groupData.is_private,
       tags: groupData.tags,
-      created_by: user.id
+      created_by: (await supabase.auth.getUser()).data.user?.id
     })
     .select()
     .single();
@@ -195,25 +127,7 @@ export const createStudyGroup = async (groupData: {
     if (scheduleError) return { data: null, error: scheduleError };
   }
 
-  // Transform the data to match our StudyGroup interface
-  const transformedData = {
-    ...group,
-    members: [{
-      userId: user.id,
-      name: 'You',
-      role: 'Owner' as const,
-      expertise: 'Intermediate' as const,
-      joinedAt: new Date()
-    }],
-    schedule: groupData.schedules.map(schedule => ({
-      day: schedule.day,
-      startTime: schedule.start_time,
-      endTime: schedule.end_time
-    })),
-    createdAt: new Date(group.created_at)
-  };
-
-  return { data: transformedData, error: null };
+  return { data: group, error: null };
 };
 
 export const updateStudyGroup = async (groupId: string, updates: {
@@ -246,7 +160,7 @@ export const deleteStudyGroup = async (groupId: string) => {
 
 export const joinStudyGroup = async (groupId: string, expertise: 'Beginner' | 'Intermediate' | 'Advanced') => {
   const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { data: null, error: new Error('User not authenticated') };
+  if (!user) return { error: new Error('User not authenticated') };
 
   const { data, error } = await supabase
     .from('group_members')
@@ -289,17 +203,7 @@ export const getGroupTasks = async (groupId: string) => {
     .eq('group_id', groupId)
     .order('created_at', { ascending: false });
   
-  // Transform the data to match our Task interface
-  const transformedData = data?.map(task => ({
-    ...task,
-    assignedTo: task.assigned_to || [],
-    dueDate: task.due_date ? new Date(task.due_date) : null,
-    groupId: task.group_id,
-    createdBy: task.created_by,
-    createdAt: new Date(task.created_at)
-  }));
-  
-  return { data: transformedData, error };
+  return { data, error };
 };
 
 export const getUserTasks = async (userId: string) => {
@@ -313,17 +217,7 @@ export const getUserTasks = async (userId: string) => {
     .contains('assigned_to', [userId])
     .order('due_date', { ascending: true });
   
-  // Transform the data to match our Task interface
-  const transformedData = data?.map(task => ({
-    ...task,
-    assignedTo: task.assigned_to || [],
-    dueDate: task.due_date ? new Date(task.due_date) : null,
-    groupId: task.group_id,
-    createdBy: task.created_by,
-    createdAt: new Date(task.created_at)
-  }));
-  
-  return { data: transformedData, error };
+  return { data, error };
 };
 
 export const createTask = async (taskData: {
@@ -335,35 +229,18 @@ export const createTask = async (taskData: {
   priority: 'low' | 'medium' | 'high';
 }) => {
   const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { data: null, error: new Error('User not authenticated') };
+  if (!user) return { error: new Error('User not authenticated') };
 
   const { data, error } = await supabase
     .from('tasks')
     .insert({
-      title: taskData.title,
-      description: taskData.description,
-      group_id: taskData.group_id,
-      assigned_to: taskData.assigned_to,
-      due_date: taskData.due_date,
-      priority: taskData.priority,
+      ...taskData,
       created_by: user.id
     })
     .select()
     .single();
   
-  if (error) return { data: null, error };
-  
-  // Transform the data to match our Task interface
-  const transformedData = {
-    ...data,
-    assignedTo: data.assigned_to || [],
-    dueDate: data.due_date ? new Date(data.due_date) : null,
-    groupId: data.group_id,
-    createdBy: data.created_by,
-    createdAt: new Date(data.created_at)
-  };
-  
-  return { data: transformedData, error: null };
+  return { data, error };
 };
 
 export const updateTask = async (taskId: string, updates: {
@@ -381,19 +258,7 @@ export const updateTask = async (taskId: string, updates: {
     .select()
     .single();
   
-  if (error) return { data: null, error };
-  
-  // Transform the data to match our Task interface
-  const transformedData = {
-    ...data,
-    assignedTo: data.assigned_to || [],
-    dueDate: data.due_date ? new Date(data.due_date) : null,
-    groupId: data.group_id,
-    createdBy: data.created_by,
-    createdAt: new Date(data.created_at)
-  };
-  
-  return { data: transformedData, error: null };
+  return { data, error };
 };
 
 export const deleteTask = async (taskId: string) => {
@@ -444,7 +309,7 @@ export const createResource = async (resourceData: {
   group_id: string;
 }) => {
   const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { data: null, error: new Error('User not authenticated') };
+  if (!user) return { error: new Error('User not authenticated') };
 
   const { data, error } = await supabase
     .from('resources')
@@ -507,7 +372,7 @@ export const createQuiz = async (quizData: {
   questions: QuizQuestion[];
 }) => {
   const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { data: null, error: new Error('User not authenticated') };
+  if (!user) return { error: new Error('User not authenticated') };
 
   const { data, error } = await supabase
     .from('quizzes')
@@ -527,11 +392,11 @@ export const submitQuizAttempt = async (attemptData: {
   time_taken: number;
 }) => {
   const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { data: null, error: new Error('User not authenticated') };
+  if (!user) return { error: new Error('User not authenticated') };
 
   // Get quiz to calculate score
   const { data: quiz, error: quizError } = await getQuizById(attemptData.quiz_id);
-  if (quizError || !quiz) return { data: null, error: quizError || new Error('Quiz not found') };
+  if (quizError || !quiz) return { error: quizError || new Error('Quiz not found') };
 
   // Calculate score
   let correctAnswers = 0;
@@ -676,7 +541,7 @@ export const sendMessage = async (messageData: {
   reply_to?: string;
 }) => {
   const user = (await supabase.auth.getUser()).data.user;
-  if (!user) return { data: null, error: new Error('User not authenticated') };
+  if (!user) return { error: new Error('User not authenticated') };
 
   const { data, error } = await supabase
     .from('messages')

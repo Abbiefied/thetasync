@@ -53,11 +53,6 @@ export function useTasks() {
     due_date?: string;
     priority: 'low' | 'medium' | 'high';
   }) => {
-    if (!user) {
-      addNotification('error', 'You must be logged in to create a task');
-      return { data: null, error: new Error('Not authenticated') };
-    }
-
     setIsLoading(true);
     try {
       const { data, error } = await api.createTask(taskData);
@@ -76,14 +71,7 @@ export function useTasks() {
   };
 
   // Update a task
-  const updateTask = async (taskId: string, updates: {
-    title?: string;
-    description?: string;
-    assigned_to?: string[];
-    due_date?: string;
-    status?: 'pending' | 'in-progress' | 'completed';
-    priority?: 'low' | 'medium' | 'high';
-  }) => {
+  const updateTask = async (taskId: string, updates: Partial<Task>) => {
     setIsLoading(true);
     try {
       const { data, error } = await api.updateTask(taskId, updates);
@@ -132,40 +120,6 @@ export function useTasks() {
     return await updateTask(taskId, { status: newStatus });
   };
 
-  // Check if user can edit task (is creator or group admin)
-  const canEditTask = (task: Task) => {
-    if (!user || !task) return false;
-    
-    // Task creator can always edit
-    if (task.createdBy === user.id) return true;
-    
-    // Group admins can edit (would need to check group membership)
-    // This would require additional API call or passing group data
-    return false;
-  };
-
-  // Check if user can delete task (is creator or group admin)
-  const canDeleteTask = (task: Task) => {
-    if (!user || !task) return false;
-    
-    // Task creator can always delete
-    if (task.createdBy === user.id) return true;
-    
-    // Group admins can delete (would need to check group membership)
-    return false;
-  };
-
-  // Get tasks by status
-  const getTasksByStatus = (status: Task['status']) => {
-    return state.tasks.filter(task => task.status === status);
-  };
-
-  // Get user's assigned tasks
-  const getUserAssignedTasks = () => {
-    if (!user) return [];
-    return state.tasks.filter(task => task.assignedTo?.includes(user.id));
-  };
-
   return {
     tasks: state.tasks,
     userTasks: state.userTasks,
@@ -175,10 +129,6 @@ export function useTasks() {
     createTask,
     updateTask,
     deleteTask,
-    toggleTaskCompletion,
-    canEditTask,
-    canDeleteTask,
-    getTasksByStatus,
-    getUserAssignedTasks
+    toggleTaskCompletion
   };
 }

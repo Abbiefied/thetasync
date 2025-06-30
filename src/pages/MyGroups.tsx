@@ -1,24 +1,70 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Users, Calendar, MessageCircle, BookOpen, Plus, Settings, ArrowLeft, Edit, Trash2 } from 'lucide-react';
-import { useStudyGroups } from '../hooks/useStudyGroups';
-import { useAuth } from '../context/AuthContext';
+import { Users, Calendar, MessageCircle, BookOpen, Plus, Settings, ArrowLeft } from 'lucide-react';
 import { StudyGroup } from '../types';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
+const MOCK_USER_GROUPS: StudyGroup[] = [
+  {
+    id: '1',
+    name: 'Advanced Algorithms Study Circle',
+    subject: 'Computer Science',
+    description: 'Deep dive into complex algorithms and data structures.',
+    members: [
+      { userId: '1', name: 'You', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() },
+      { userId: '2', name: 'Alex Chen', role: 'Owner', expertise: 'Advanced', joinedAt: new Date() },
+      { userId: '3', name: 'Sarah Kim', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() }
+    ],
+    maxMembers: 8,
+    schedule: [
+      { day: 'Tuesday', startTime: '19:00', endTime: '21:00' },
+      { day: 'Thursday', startTime: '19:00', endTime: '21:00' }
+    ],
+    tags: ['Algorithms', 'Data Structures', 'Interview Prep'],
+    difficulty: 'Advanced',
+    isPrivate: false,
+    createdBy: '2',
+    createdAt: new Date('2024-01-15')
+  },
+  {
+    id: '2',
+    name: 'Machine Learning Fundamentals',
+    subject: 'Computer Science',
+    description: 'Learn the basics of machine learning algorithms.',
+    members: [
+      { userId: '1', name: 'You', role: 'Owner', expertise: 'Advanced', joinedAt: new Date() },
+      { userId: '4', name: 'Amanda Taylor', role: 'Member', expertise: 'Beginner', joinedAt: new Date() },
+      { userId: '5', name: 'Robert Johnson', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() }
+    ],
+    maxMembers: 10,
+    schedule: [
+      { day: 'Friday', startTime: '16:00', endTime: '18:00' }
+    ],
+    tags: ['Machine Learning', 'AI', 'Python'],
+    difficulty: 'Beginner',
+    isPrivate: false,
+    createdBy: '1',
+    createdAt: new Date('2024-01-28')
+  }
+];
+
 export default function MyGroups() {
   const navigate = useNavigate();
-  const { user } = useAuth();
-  const { userGroups, fetchUserGroups, deleteGroup, leaveGroup, canManageGroup, isGroupOwner, isLoading } = useStudyGroups();
+  const [groups, setGroups] = useState<StudyGroup[]>([]);
   const [activeTab, setActiveTab] = useState('joined');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchUserGroups();
+    // Simulate API call
+    setTimeout(() => {
+      setGroups(MOCK_USER_GROUPS);
+      setIsLoading(false);
+    }, 800);
   }, []);
 
-  const joinedGroups = userGroups.filter(group => !isGroupOwner(group));
-  const ownedGroups = userGroups.filter(group => isGroupOwner(group));
+  const joinedGroups = groups.filter(group => group.createdBy !== '1');
+  const ownedGroups = groups.filter(group => group.createdBy === '1');
   
   const displayGroups = activeTab === 'joined' ? joinedGroups : ownedGroups;
 
@@ -27,20 +73,6 @@ export default function MyGroups() {
     // Simplified - just return the first scheduled session
     const session = schedule[0];
     return `Next ${session.day} at ${session.startTime}`;
-  };
-
-  const handleDeleteGroup = async (groupId: string, groupName: string) => {
-    if (window.confirm(`Are you sure you want to delete "${groupName}"? This action cannot be undone.`)) {
-      await deleteGroup(groupId);
-      fetchUserGroups(); // Refresh the list
-    }
-  };
-
-  const handleLeaveGroup = async (groupId: string, groupName: string) => {
-    if (window.confirm(`Are you sure you want to leave "${groupName}"?`)) {
-      await leaveGroup(groupId);
-      fetchUserGroups(); // Refresh the list
-    }
   };
 
   if (isLoading) {
@@ -135,46 +167,20 @@ export default function MyGroups() {
                         </p>
                       </div>
                       
-                      {/* Action Menu */}
-                      <div className="flex items-center space-x-2">
-                        {canManageGroup(group) && (
-                          <button 
-                            className="p-2 text-neutral-400 hover:text-blue-600 transition-colors"
-                            title="Edit group"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                        )}
-                        
-                        {isGroupOwner(group) ? (
-                          <button 
-                            onClick={() => handleDeleteGroup(group.id, group.name)}
-                            className="p-2 text-neutral-400 hover:text-red-600 transition-colors"
-                            title="Delete group"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => handleLeaveGroup(group.id, group.name)}
-                            className="p-2 text-neutral-400 hover:text-red-600 transition-colors"
-                            title="Leave group"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        )}
-                      </div>
+                      {group.createdBy === '1' && (
+                        <button 
+                          className="p-2 text-neutral-400 hover:text-neutral-600 transition-colors"
+                          aria-label="Group settings"
+                        >
+                          <Settings className="w-5 h-5" />
+                        </button>
+                      )}
                     </div>
 
                     <div className="space-y-3 mb-6">
                       <div className="flex items-center text-sm text-neutral-500">
                         <Users className="w-4 h-4 mr-2" />
                         {group.members.length} members
-                        {isGroupOwner(group) && (
-                          <span className="ml-2 px-2 py-1 bg-primary-100 text-primary-700 rounded-full text-xs">
-                            Owner
-                          </span>
-                        )}
                       </div>
                       
                       <div className="flex items-center text-sm text-neutral-500">
@@ -215,7 +221,7 @@ export default function MyGroups() {
                     : 'Create your first study group and invite other students to join.'
                   }
                 </p>
-                <Link to={activeTab === 'joined' ? '/discover' : '/create-group'}>
+                <Link to="/discover">
                   <Button>
                     <Plus className="w-4 h-4 mr-2" />
                     {activeTab === 'joined' ? 'Browse Groups' : 'Create Group'}
@@ -227,25 +233,25 @@ export default function MyGroups() {
         </div>
 
         {/* Quick Stats */}
-        {userGroups.length > 0 && (
+        {groups.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <Card className="text-center">
               <div className="text-2xl font-bold text-primary-600 mb-1">
-                {userGroups.length}
+                {groups.length}
               </div>
               <div className="text-sm text-neutral-600">Active Groups</div>
             </Card>
             
             <Card className="text-center">
               <div className="text-2xl font-bold text-secondary-600 mb-1">
-                {userGroups.reduce((acc, group) => acc + group.schedule.length, 0)}
+                {groups.reduce((acc, group) => acc + group.schedule.length, 0)}
               </div>
               <div className="text-sm text-neutral-600">Weekly Sessions</div>
             </Card>
             
             <Card className="text-center">
               <div className="text-2xl font-bold text-accent-600 mb-1">
-                {userGroups.reduce((acc, group) => acc + group.members.length, 0)}
+                {groups.reduce((acc, group) => acc + group.members.length, 0)}
               </div>
               <div className="text-sm text-neutral-600">Study Partners</div>
             </Card>

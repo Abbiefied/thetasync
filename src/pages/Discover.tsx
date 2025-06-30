@@ -1,29 +1,117 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Filter, Users, Clock, Star, Plus, ArrowLeft } from 'lucide-react';
-import { useStudyGroups } from '../hooks/useStudyGroups';
 import { StudyGroup } from '../types';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
+const MOCK_GROUPS: StudyGroup[] = [
+  {
+    id: '1',
+    name: 'Advanced Algorithms Study Circle',
+    subject: 'Computer Science',
+    description: 'Deep dive into complex algorithms and data structures. Perfect for preparing for technical interviews.',
+    members: [
+      { userId: '1', name: 'Alex Chen', role: 'Owner', expertise: 'Advanced', joinedAt: new Date() },
+      { userId: '2', name: 'Sarah Kim', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() },
+      { userId: '3', name: 'Mike Johnson', role: 'Member', expertise: 'Advanced', joinedAt: new Date() }
+    ],
+    maxMembers: 8,
+    schedule: [
+      { day: 'Tuesday', startTime: '19:00', endTime: '21:00' },
+      { day: 'Thursday', startTime: '19:00', endTime: '21:00' }
+    ],
+    tags: ['Algorithms', 'Data Structures', 'Interview Prep'],
+    difficulty: 'Advanced',
+    isPrivate: false,
+    createdBy: '1',
+    createdAt: new Date('2024-01-15')
+  },
+  {
+    id: '2',
+    name: 'Organic Chemistry Mastery',
+    subject: 'Chemistry',
+    description: 'Master organic chemistry concepts through collaborative problem-solving and peer teaching.',
+    members: [
+      { userId: '4', name: 'Emily Davis', role: 'Owner', expertise: 'Advanced', joinedAt: new Date() },
+      { userId: '5', name: 'David Wilson', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() },
+      { userId: '6', name: 'Lisa Brown', role: 'Member', expertise: 'Beginner', joinedAt: new Date() },
+      { userId: '7', name: 'John Smith', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() }
+    ],
+    maxMembers: 6,
+    schedule: [
+      { day: 'Monday', startTime: '18:00', endTime: '20:00' },
+      { day: 'Wednesday', startTime: '18:00', endTime: '20:00' }
+    ],
+    tags: ['Organic Chemistry', 'Problem Solving', 'Pre-Med'],
+    difficulty: 'Intermediate',
+    isPrivate: false,
+    createdBy: '4',
+    createdAt: new Date('2024-01-20')
+  },
+  {
+    id: '3',
+    name: 'Calculus III Study Group',
+    subject: 'Mathematics',
+    description: 'Work through multivariable calculus problems and prepare for exams together.',
+    members: [
+      { userId: '8', name: 'Maria Garcia', role: 'Owner', expertise: 'Intermediate', joinedAt: new Date() },
+      { userId: '9', name: 'James Lee', role: 'Member', expertise: 'Beginner', joinedAt: new Date() }
+    ],
+    maxMembers: 5,
+    schedule: [
+      { day: 'Sunday', startTime: '14:00', endTime: '16:00' }
+    ],
+    tags: ['Calculus', 'Mathematics', 'Problem Solving'],
+    difficulty: 'Intermediate',
+    isPrivate: false,
+    createdBy: '8',
+    createdAt: new Date('2024-02-01')
+  },
+  {
+    id: '4',
+    name: 'Machine Learning Fundamentals',
+    subject: 'Computer Science',
+    description: 'Learn the basics of machine learning algorithms and their applications.',
+    members: [
+      { userId: '10', name: 'Kevin Zhang', role: 'Owner', expertise: 'Advanced', joinedAt: new Date() },
+      { userId: '11', name: 'Amanda Taylor', role: 'Member', expertise: 'Beginner', joinedAt: new Date() },
+      { userId: '12', name: 'Robert Johnson', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() },
+      { userId: '13', name: 'Jennifer Wang', role: 'Member', expertise: 'Beginner', joinedAt: new Date() },
+      { userId: '14', name: 'Michael Brown', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() }
+    ],
+    maxMembers: 10,
+    schedule: [
+      { day: 'Friday', startTime: '16:00', endTime: '18:00' }
+    ],
+    tags: ['Machine Learning', 'AI', 'Python', 'Data Science'],
+    difficulty: 'Beginner',
+    isPrivate: false,
+    createdBy: '10',
+    createdAt: new Date('2024-01-28')
+  }
+];
+
 export default function Discover() {
   const navigate = useNavigate();
-  const { studyGroups, fetchPublicGroups, isLoading } = useStudyGroups();
+  const [groups, setGroups] = useState<StudyGroup[]>([]);
   const [filteredGroups, setFilteredGroups] = useState<StudyGroup[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchPublicGroups();
+    // Simulate API call
+    setTimeout(() => {
+      setGroups(MOCK_GROUPS);
+      setFilteredGroups(MOCK_GROUPS);
+      setIsLoading(false);
+    }, 1000);
   }, []);
 
   useEffect(() => {
-    setFilteredGroups(studyGroups);
-  }, [studyGroups]);
-
-  useEffect(() => {
-    let filtered = studyGroups;
+    let filtered = groups;
 
     if (searchTerm) {
       filtered = filtered.filter(group =>
@@ -43,9 +131,9 @@ export default function Discover() {
     }
 
     setFilteredGroups(filtered);
-  }, [studyGroups, searchTerm, selectedSubject, selectedDifficulty]);
+  }, [groups, searchTerm, selectedSubject, selectedDifficulty]);
 
-  const subjects = [...new Set(studyGroups.map(group => group.subject))];
+  const subjects = [...new Set(groups.map(group => group.subject))];
   const difficulties = ['Beginner', 'Intermediate', 'Advanced'];
 
   const getDifficultyColor = (difficulty: string) => {
