@@ -702,12 +702,7 @@ export const getGroupMessages = async (groupId: string) => {
     .from('messages')
     .select(`
       *,
-      user_profiles!messages_user_id_fkey(name),
-      reply_message:messages!messages_reply_to_fkey(
-        id,
-        content,
-        user_profiles!messages_user_id_fkey(name)
-      )
+      user_profiles!messages_user_id_fkey(name)
     `)
     .eq('group_id', groupId)
     .order('created_at', { ascending: true });
@@ -733,12 +728,7 @@ export const sendMessage = async (messageData: {
     })
     .select(`
       *,
-      user_profiles!messages_user_id_fkey(name),
-      reply_message:messages!messages_reply_to_fkey(
-        id,
-        content,
-        user_profiles!messages_user_id_fkey(name)
-      )
+      user_profiles!messages_user_id_fkey(name)
     `)
     .single();
   
@@ -754,12 +744,7 @@ export const updateMessage = async (messageId: string, updates: {
     .eq('id', messageId)
     .select(`
       *,
-      user_profiles!messages_user_id_fkey(name),
-      reply_message:messages!messages_reply_to_fkey(
-        id,
-        content,
-        user_profiles!messages_user_id_fkey(name)
-      )
+      user_profiles!messages_user_id_fkey(name)
     `)
     .single();
   

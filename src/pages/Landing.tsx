@@ -95,16 +95,23 @@ export default function Landing() {
             {/* Right Column - Hero Image */}
             <div className="flex justify-center lg:justify-end">
               <div className="relative">
-                <img
-                  src="/src/assets/white_circle_360x360.png"
-                  alt="StudyCircle Community"
-                  className="w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 lg:w-[360px] lg:h-[360px] object-contain animate-fade-in"
-                  style={{ animationDelay: '0.3s' }}
-                />
+                <a 
+                  href="https://bolt.new" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="block hover:scale-105 transition-transform duration-300"
+                >
+                  <img
+                    src="/src/assets/white_circle_360x360.png"
+                    alt="Built on Bolt"
+                    className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 lg:w-48 lg:h-48 object-contain animate-fade-in hover:opacity-90 transition-opacity"
+                    style={{ animationDelay: '0.3s' }}
+                  />
+                </a>
                 {/* Floating elements for visual interest */}
-                <div className="absolute -top-4 -left-4 w-8 h-8 bg-primary-200 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
-                <div className="absolute -bottom-6 -right-6 w-12 h-12 bg-secondary-200 rounded-full animate-pulse" style={{ animationDelay: '1.5s' }}></div>
-                <div className="absolute top-1/4 -right-8 w-6 h-6 bg-accent-200 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+                <div className="absolute -top-2 -left-2 w-4 h-4 bg-primary-200 rounded-full animate-pulse" style={{ animationDelay: '1s' }}></div>
+                <div className="absolute -bottom-3 -right-3 w-6 h-6 bg-secondary-200 rounded-full animate-pulse" style={{ animationDelay: '1.5s' }}></div>
+                <div className="absolute top-1/4 -right-4 w-3 h-3 bg-accent-200 rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
               </div>
             </div>
           </div>
@@ -334,9 +341,14 @@ export default function Landing() {
 
       {/* Built on Bolt Badge */}
       <div className="fixed bottom-4 right-4 z-50">
-        <span className="bg-primary-600 text-white px-3 py-2 rounded-full text-sm font-medium shadow-lg">
+        <a 
+          href="https://bolt.new" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="bg-primary-600 text-white px-3 py-2 rounded-full text-sm font-medium shadow-lg hover:bg-primary-700 transition-colors"
+        >
           Built on Bolt
-        </span>
+        </a>
       </div>
     </div>
   );
