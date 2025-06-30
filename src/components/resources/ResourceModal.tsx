@@ -6,7 +6,7 @@ import Button from '../common/Button';
 interface ResourceModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (resourceData: Omit<Resource, 'id' | 'uploadedBy' | 'uploadedAt'>) => void;
+  onSubmit: (resourceData: Omit<Resource, 'id' | 'uploaded_by' | 'uploaded_at'>) => void;
   resource?: Resource;
   isLoading: boolean;
   groupId: string;
@@ -33,7 +33,7 @@ export default function ResourceModal({
     type: 'document' as Resource['type'],
     url: '',
     tags: [] as string[],
-    groupId: groupId
+    group_id: groupId
   });
   const [tagInput, setTagInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -49,7 +49,7 @@ export default function ResourceModal({
         type: resource.type,
         url: resource.url,
         tags: resource.tags,
-        groupId: resource.groupId
+        group_id: resource.group_id
       });
       setUploadMethod('url'); // Existing resources are always URL-based
     } else {
@@ -59,7 +59,7 @@ export default function ResourceModal({
         type: 'document',
         url: '',
         tags: [],
-        groupId: groupId
+        group_id: groupId
       });
       setUploadMethod('file');
     }

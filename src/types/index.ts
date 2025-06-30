@@ -96,9 +96,9 @@ export interface Resource {
   type: 'document' | 'video' | 'link' | 'image';
   url: string;
   tags: string[];
-  groupId: string;
-  uploadedBy: string;
-  uploadedAt: Date;
+  group_id: string;
+  uploaded_by: string;
+  uploaded_at: Date;
 }
 
 export interface Message {

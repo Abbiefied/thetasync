@@ -52,9 +52,9 @@ const MOCK_RESOURCES: Resource[] = [
     type: 'document',
     url: '#',
     tags: ['Algorithms', 'Reference'],
-    groupId: '1',
-    uploadedBy: '2',
-    uploadedAt: new Date()
+    group_id: '1',
+    uploaded_by: '2',
+    uploaded_at: new Date()
   },
   {
     id: '2',
@@ -63,9 +63,9 @@ const MOCK_RESOURCES: Resource[] = [
     type: 'video',
     url: '#',
     tags: ['Dynamic Programming', 'Tutorial'],
-    groupId: '1',
-    uploadedBy: '3',
-    uploadedAt: new Date()
+    group_id: '1',
+    uploaded_by: '3',
+    uploaded_at: new Date()
   }
 ];
 
@@ -149,7 +149,7 @@ export default function GroupWorkspace() {
           
           // Set mock data for tasks and resources (filtered by group ID)
           setTasks(MOCK_TASKS.filter(task => task.groupId === id));
-          setResources(MOCK_RESOURCES.filter(resource => resource.groupId === id));
+          setResources(MOCK_RESOURCES.filter(resource => resource.group_id === id));
         }
       } catch (error) {
         console.error('Error fetching group:', error);
@@ -221,15 +221,12 @@ export default function GroupWorkspace() {
     setIsEditing(false);
   };
 
-  const handleUploadResource = async (resourceData: Omit<Resource, 'id' | 'uploadedBy' | 'uploadedAt'>) => {
+  const handleUploadResource = async (resourceData: Omit<Resource, 'id' | 'uploaded_by' | 'uploaded_at'>) => {
     if (!id) return;
     
     setIsUploadingResource(true);
     try {
-      const { error } = await createResource({
-        ...resourceData,
-        group_id: id
-      });
+      const { error } = await createResource(resourceData);
       
       if (!error) {
         setShowResourceModal(false);
@@ -237,8 +234,8 @@ export default function GroupWorkspace() {
         const newResource: Resource = {
           ...resourceData,
           id: `temp-${Date.now()}`,
-          uploadedBy: user?.email || 'You',
-          uploadedAt: new Date()
+          uploaded_by: user?.email || 'You',
+          uploaded_at: new Date()
         };
         setResources(prev => [newResource, ...prev]);
         addNotification('success', 'Resource uploaded successfully!');
@@ -610,7 +607,7 @@ export default function GroupWorkspace() {
                       </div>
                       
                       <div className="text-xs text-neutral-500">
-                        Uploaded {resource.uploadedAt.toLocaleDateString()}
+                        Uploaded {resource.uploaded_at.toLocaleDateString()}
                       </div>
                     </Card>
                   ))}

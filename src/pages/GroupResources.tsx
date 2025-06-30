@@ -66,15 +66,12 @@ export default function GroupResources() {
   const allTags = [...new Set(resources.flatMap(resource => resource.tags))];
   const resourceTypes = ['document', 'video', 'link', 'image'];
 
-  const handleUploadResource = async (resourceData: Omit<Resource, 'id' | 'uploadedBy' | 'uploadedAt'>) => {
+  const handleUploadResource = async (resourceData: Omit<Resource, 'id' | 'uploaded_by' | 'uploaded_at'>) => {
     if (!id) return;
     
     setIsSubmitting(true);
     try {
-      const { error } = await createResource({
-        ...resourceData,
-        group_id: id
-      });
+      const { error } = await createResource(resourceData);
       
       if (!error) {
         setShowUploadModal(false);
@@ -102,7 +99,7 @@ export default function GroupResources() {
   };
 
   const isResourceOwner = (resource: Resource) => {
-    return resource.uploadedBy === user?.id;
+    return resource.uploaded_by === user?.id;
   };
 
   if (isLoading) {

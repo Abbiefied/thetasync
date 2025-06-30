@@ -13,9 +13,9 @@ const MOCK_RESOURCES: Resource[] = [
     type: 'document',
     url: '#',
     tags: ['Algorithms', 'Data Structures', 'Reference'],
-    groupId: '1',
-    uploadedBy: 'Alex Chen',
-    uploadedAt: new Date('2025-01-10')
+    group_id: '1',
+    uploaded_by: 'Alex Chen',
+    uploaded_at: new Date('2025-01-10')
   },
   {
     id: '2',
@@ -24,9 +24,9 @@ const MOCK_RESOURCES: Resource[] = [
     type: 'video',
     url: '#',
     tags: ['Dynamic Programming', 'Tutorial', 'Video'],
-    groupId: '1',
-    uploadedBy: 'Sarah Kim',
-    uploadedAt: new Date('2025-01-12')
+    group_id: '1',
+    uploaded_by: 'Sarah Kim',
+    uploaded_at: new Date('2025-01-12')
   },
   {
     id: '3',
@@ -35,9 +35,9 @@ const MOCK_RESOURCES: Resource[] = [
     type: 'link',
     url: '#',
     tags: ['Interview Prep', 'Problem Solving', 'Patterns'],
-    groupId: '2',
-    uploadedBy: 'Mike Johnson',
-    uploadedAt: new Date('2025-01-08')
+    group_id: '2',
+    uploaded_by: 'Mike Johnson',
+    uploaded_at: new Date('2025-01-08')
   },
   {
     id: '4',
@@ -46,9 +46,9 @@ const MOCK_RESOURCES: Resource[] = [
     type: 'image',
     url: '#',
     tags: ['Big O', 'Complexity', 'Reference'],
-    groupId: '1',
-    uploadedBy: 'Emily Davis',
-    uploadedAt: new Date('2025-01-05')
+    group_id: '1',
+    uploaded_by: 'Emily Davis',
+    uploaded_at: new Date('2025-01-05')
   },
   {
     id: '5',
@@ -57,9 +57,9 @@ const MOCK_RESOURCES: Resource[] = [
     type: 'document',
     url: '#',
     tags: ['Machine Learning', 'AI', 'Course Materials'],
-    groupId: '3',
-    uploadedBy: 'David Wilson',
-    uploadedAt: new Date('2025-01-15')
+    group_id: '3',
+    uploaded_by: 'David Wilson',
+    uploaded_at: new Date('2025-01-15')
   },
   {
     id: '6',
@@ -68,9 +68,9 @@ const MOCK_RESOURCES: Resource[] = [
     type: 'video',
     url: '#',
     tags: ['Python', 'Data Structures', 'Implementation'],
-    groupId: '2',
-    uploadedBy: 'Lisa Brown',
-    uploadedAt: new Date('2025-01-14')
+    group_id: '2',
+    uploaded_by: 'Lisa Brown',
+    uploaded_at: new Date('2025-01-14')
   }
 ];
 
@@ -297,8 +297,8 @@ export default function Resources() {
 
                   <div className="border-t border-neutral-200 pt-4 mt-4">
                     <div className="flex items-center justify-between text-sm text-neutral-500 mb-3">
-                      <span>By {resource.uploadedBy}</span>
-                      <span>{resource.uploadedAt.toLocaleDateString()}</span>
+                      <span>By {resource.uploaded_by}</span>
+                      <span>{resource.uploaded_at.toLocaleDateString()}</span>
                     </div>
                     
                     <div className="flex space-x-2">

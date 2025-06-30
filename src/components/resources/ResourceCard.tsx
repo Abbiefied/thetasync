@@ -108,8 +108,8 @@ export default function ResourceCard({ resource, isOwner, onEdit, onDelete, onVi
 
       <div className="border-t border-neutral-200 pt-4 mt-4">
         <div className="flex items-center justify-between text-sm text-neutral-500 mb-3">
-          <span>By {resource.uploadedBy}</span>
-          <span>{new Date(resource.uploadedAt).toLocaleDateString()}</span>
+          <span>By {resource.uploaded_by}</span>
+          <span>{new Date(resource.uploaded_at).toLocaleDateString()}</span>
         </div>
         
         <div className="flex space-x-2">
