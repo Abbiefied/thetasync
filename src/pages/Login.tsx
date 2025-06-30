@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Users, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 import { signIn, signInWithGoogle } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -18,7 +17,6 @@ interface ValidationErrors {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { loading: authLoading } = useAuth();
   const from = location.state?.from?.pathname || '/homepage';
   
   const [data, setData] = useState<LoginData>({
@@ -64,45 +62,25 @@ export default function Login() {
       setErrors({}); // Clear any previous errors
       
       try {
-        console.log('Attempting to sign in with:', data.email);
-        
         const { data: authData, error } = await signIn(data.email, data.password);
         
-        console.log('Sign in response:', { 
-          user: authData?.user?.email || 'No user',
-          session: authData?.session ? 'Session exists' : 'No session',
-          error: error?.message || 'No error'
-        });
-        
         if (error) {
-          console.error('Sign in error:', error);
-          
           if (error.message.includes('Invalid login credentials')) {
             setErrors({ general: 'Invalid email or password. Please check your credentials and try again.' });
           } else if (error.message.includes('Email not confirmed')) {
             setErrors({ general: 'Please check your email and click the confirmation link before signing in.' });
-          } else if (error.message.includes('Too many requests')) {
-            setErrors({ general: 'Too many login attempts. Please wait a moment and try again.' });
           } else {
-            setErrors({ general: error.message || 'An error occurred during sign in.' });
+            setErrors({ general: error.message });
           }
-        } else if (authData?.user && authData?.session) {
-          console.log('Sign in successful, user:', authData.user.email);
-          
+        } else if (authData.user) {
           // Clear form data on successful login
           setData({ email: '', password: '' });
           
-          // Wait for auth context to update, then navigate
-          setTimeout(() => {
-            console.log('Navigating to:', from);
-            navigate(from, { replace: true });
-          }, 500);
-        } else {
-          console.error('No user data or session returned');
-          setErrors({ general: 'Sign in failed. Please try again.' });
+          // Navigate immediately - the auth context will handle the rest
+          navigate(from, { replace: true });
         }
       } catch (error) {
-        console.error('Unexpected login error:', error);
+        console.error('Login error:', error);
         setErrors({ general: 'An unexpected error occurred. Please try again.' });
       } finally {
         setIsLoading(false);
@@ -115,18 +93,15 @@ export default function Login() {
     setErrors({}); // Clear any previous errors
     
     try {
-      console.log('Attempting Google sign in');
-      
       const { error } = await signInWithGoogle();
       
       if (error) {
-        console.error('Google sign in error:', error);
-        setErrors({ general: error.message || 'Google sign-in failed. Please try again.' });
+        setErrors({ general: error.message });
         setIsGoogleLoading(false);
       }
       // If successful, the auth state change will handle navigation
     } catch (error) {
-      console.error('Unexpected Google sign-in error:', error);
+      console.error('Google sign-in error:', error);
       setErrors({ general: 'Google sign-in failed. Please try again.' });
       setIsGoogleLoading(false);
     }
@@ -141,15 +116,6 @@ export default function Login() {
       </div>
     );
   };
-
-  // Show loading if auth is still initializing
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4">
@@ -170,7 +136,7 @@ export default function Login() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-2 text-primary-600 font-bold text-2xl mb-4">
               <Users className="w-8 h-8" />
-              <span>ThetaSync</span>
+              <span>StudyCircle</span>
             </div>
             <h1 className="text-2xl font-bold text-neutral-900 mb-2">Welcome Back</h1>
             <p className="text-neutral-600">Sign in to your account to continue learning</p>
@@ -331,7 +297,7 @@ export default function Login() {
           <div className="mt-6 p-4 bg-neutral-50 rounded-lg">
             <h4 className="text-sm font-medium text-neutral-700 mb-2">Demo Credentials</h4>
             <div className="text-sm text-neutral-600 space-y-1">
-              <p><strong>Email:</strong> demo@thetasync.com</p>
+              <p><strong>Email:</strong> demo@studycircle.com</p>
               <p><strong>Password:</strong> Demo123!</p>
             </div>
           </div>

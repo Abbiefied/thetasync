@@ -41,10 +41,10 @@ export default function Header() {
             <Link 
               to="/homepage" 
               className="flex items-center space-x-2 text-primary-600 font-bold text-xl hover:text-primary-700 transition-colors"
-              aria-label="ThetaSync Home"
+              aria-label="StudyCircle Home"
             >
               <Users className="w-8 h-8" />
-              <span>ThetaSync</span>
+              <span>StudyCircle</span>
             </Link>
 
             {/* Desktop Navigation */}
