@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, BookOpen, Video, Link, Image, Download, Star, Plus } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Filter, BookOpen, Video, Link, Image, Download, Star, Plus, ChevronLeft } from 'lucide-react';
 import { Resource } from '../types';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -74,6 +75,7 @@ const MOCK_RESOURCES: Resource[] = [
 ];
 
 export default function Resources() {
+  const navigate = useNavigate();
   const [resources, setResources] = useState<Resource[]>([]);
   const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -168,6 +170,17 @@ export default function Resources() {
   return (
     <div className="min-h-screen bg-neutral-50 pt-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/homepage')}
+            className="flex items-center text-neutral-600 hover:text-neutral-900 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Back to Homepage
+          </button>
+        </div>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-neutral-900 mb-2">Resource Library</h1>

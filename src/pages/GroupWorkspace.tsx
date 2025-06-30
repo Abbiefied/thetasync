@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { 
   MessageCircle, Users, BookOpen, CheckSquare, Video, 
   Plus, Send, Paperclip, MoreVertical, Clock, Trophy,
-  Search, Filter, Star, Calendar, Target
+  Search, Filter, Star, Calendar, Target, ChevronLeft, Edit, Save, X
 } from 'lucide-react';
 import { StudyGroup, Task, Resource, Quiz } from '../types';
-import { getStudyGroupById } from '../lib/api';
+import { getStudyGroupById, updateStudyGroup } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/AppContext';
 import Button from '../components/common/Button';
@@ -68,6 +68,7 @@ type TabType = 'chat' | 'tasks' | 'resources' | 'quizzes' | 'progress';
 
 export default function GroupWorkspace() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { addNotification } = useNotifications();
   const [activeTab, setActiveTab] = useState<TabType>('chat');
@@ -78,6 +79,13 @@ export default function GroupWorkspace() {
   const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [groupOwner, setGroupOwner] = useState<string>('Unknown');
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    name: '',
+    description: '',
+    schedule: [] as Array<{ day: string; start_time: string; end_time: string }>
+  });
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const fetchGroupData = async () => {
@@ -98,6 +106,17 @@ export default function GroupWorkspace() {
         } else if (data) {
           console.log('Group data fetched successfully:', data);
           setGroup(data);
+          
+          // Set edit data
+          setEditData({
+            name: data.name,
+            description: data.description,
+            schedule: (data.schedule || []).map(slot => ({
+              day: slot.day,
+              start_time: slot.startTime,
+              end_time: slot.endTime
+            }))
+          });
           
           // Find the group owner's name
           const owner = data.members?.find(member => member.role === 'Owner');
@@ -162,6 +181,49 @@ export default function GroupWorkspace() {
     }
   };
 
+  const handleSaveEdit = async () => {
+    if (!group || !user) return;
+
+    setIsSaving(true);
+    try {
+      const updates = {
+        name: editData.name,
+        description: editData.description
+      };
+
+      const { error } = await updateStudyGroup(group.id, updates);
+      
+      if (error) {
+        addNotification('error', 'Failed to update group');
+        return;
+      }
+
+      // Update local state
+      const updatedGroup = { ...group, ...updates };
+      setGroup(updatedGroup);
+      setIsEditing(false);
+      addNotification('success', 'Group updated successfully!');
+    } catch (error) {
+      console.error('Error updating group:', error);
+      addNotification('error', 'Failed to update group');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditData({
+      name: group?.name || '',
+      description: group?.description || '',
+      schedule: (group?.schedule || []).map(slot => ({
+        day: slot.day,
+        start_time: slot.startTime,
+        end_time: slot.endTime
+      }))
+    });
+    setIsEditing(false);
+  };
+
   const getPriorityColor = (priority: Task['priority']) => {
     switch (priority) {
       case 'high': return 'bg-red-100 text-red-700 border-red-200';
@@ -199,23 +261,57 @@ export default function GroupWorkspace() {
       <div className="min-h-screen bg-neutral-50 pt-24 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-neutral-900 mb-4">Group not found</h2>
-          <Link to="/my-groups">
-            <Button>Back to My Groups</Button>
-          </Link>
+          <Button onClick={() => navigate('/my-groups')}>
+            Back to My Groups
+          </Button>
         </div>
       </div>
     );
   }
 
+  const isOwner = group.createdBy === user?.id;
+
   return (
     <div className="min-h-screen bg-neutral-50 pt-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/my-groups')}
+            className="flex items-center text-neutral-600 hover:text-neutral-900 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Back to My Groups
+          </button>
+        </div>
+
         {/* Group Header */}
         <div className="mb-8">
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-neutral-900 mb-2">{group.name}</h1>
-              <p className="text-neutral-600 mb-4">{group.description}</p>
+              {isEditing ? (
+                <div className="space-y-4">
+                  <input
+                    type="text"
+                    value={editData.name}
+                    onChange={(e) => setEditData(prev => ({ ...prev, name: e.target.value }))}
+                    className="text-3xl font-bold text-neutral-900 bg-transparent border-b-2 border-primary-300 focus:border-primary-600 outline-none w-full"
+                    placeholder="Group name"
+                  />
+                  <textarea
+                    value={editData.description}
+                    onChange={(e) => setEditData(prev => ({ ...prev, description: e.target.value }))}
+                    rows={3}
+                    className="text-neutral-600 bg-neutral-50 border border-neutral-300 rounded-lg p-3 w-full resize-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="Group description"
+                  />
+                </div>
+              ) : (
+                <>
+                  <h1 className="text-3xl font-bold text-neutral-900 mb-2">{group.name}</h1>
+                  <p className="text-neutral-600 mb-4">{group.description}</p>
+                </>
+              )}
               
               <div className="flex items-center space-x-4 text-sm text-neutral-500">
                 <div className="flex items-center">
@@ -238,13 +334,46 @@ export default function GroupWorkspace() {
             </div>
             
             <div className="flex items-center space-x-3">
-              <Button variant="outline" size="sm">
-                <Video className="w-4 h-4 mr-2" />
-                Start Call
-              </Button>
-              <Button variant="outline" size="sm">
-                <MoreVertical className="w-4 h-4" />
-              </Button>
+              {isEditing ? (
+                <>
+                  <Button 
+                    onClick={handleSaveEdit}
+                    isLoading={isSaving}
+                    size="sm"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    Save
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    onClick={handleCancelEdit}
+                    size="sm"
+                  >
+                    <X className="w-4 h-4 mr-2" />
+                    Cancel
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {isOwner && (
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit Group
+                    </Button>
+                  )}
+                  <Button variant="outline" size="sm">
+                    <Video className="w-4 h-4 mr-2" />
+                    Start Call
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <MoreVertical className="w-4 h-4" />
+                  </Button>
+                </>
+              )}
             </div>
           </div>
 

@@ -224,7 +224,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
     // Notification actions
     case 'ADD_NOTIFICATION':
       const newNotification = {
-        id: Date.now().toString(),
+        id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
         ...action.payload,
         timestamp: new Date()
       };
@@ -274,11 +274,6 @@ export function useNotifications() {
   
   const addNotification = (type: 'success' | 'error' | 'info' | 'warning', message: string) => {
     dispatch({ type: 'ADD_NOTIFICATION', payload: { type, message } });
-    
-    // Auto-remove after 5 seconds
-    setTimeout(() => {
-      dispatch({ type: 'REMOVE_NOTIFICATION', payload: Date.now().toString() });
-    }, 5000);
   };
   
   const removeNotification = (id: string) => {

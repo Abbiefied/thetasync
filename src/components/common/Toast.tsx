@@ -40,24 +40,51 @@ export default function Toast() {
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
       {notifications.map((notification) => (
-        <div
+        <ToastItem
           key={notification.id}
-          className={`flex items-center space-x-3 p-4 rounded-lg border shadow-lg max-w-sm animate-slide-up ${getBackgroundColor(notification.type)}`}
-        >
-          {getIcon(notification.type)}
-          <div className="flex-1">
-            <p className="text-sm font-medium text-neutral-900">
-              {notification.message}
-            </p>
-          </div>
-          <button
-            onClick={() => removeNotification(notification.id)}
-            className="text-neutral-400 hover:text-neutral-600 transition-colors"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        </div>
+          notification={notification}
+          onRemove={removeNotification}
+          getIcon={getIcon}
+          getBackgroundColor={getBackgroundColor}
+        />
       ))}
+    </div>
+  );
+}
+
+interface ToastItemProps {
+  notification: any;
+  onRemove: (id: string) => void;
+  getIcon: (type: string) => React.ReactNode;
+  getBackgroundColor: (type: string) => string;
+}
+
+function ToastItem({ notification, onRemove, getIcon, getBackgroundColor }: ToastItemProps) {
+  useEffect(() => {
+    // Auto-remove after 30 seconds
+    const timer = setTimeout(() => {
+      onRemove(notification.id);
+    }, 30000);
+
+    return () => clearTimeout(timer);
+  }, [notification.id, onRemove]);
+
+  return (
+    <div
+      className={`flex items-center space-x-3 p-4 rounded-lg border shadow-lg max-w-sm animate-slide-up ${getBackgroundColor(notification.type)}`}
+    >
+      {getIcon(notification.type)}
+      <div className="flex-1">
+        <p className="text-sm font-medium text-neutral-900">
+          {notification.message}
+        </p>
+      </div>
+      <button
+        onClick={() => onRemove(notification.id)}
+        className="text-neutral-400 hover:text-neutral-600 transition-colors"
+      >
+        <X className="w-4 h-4" />
+      </button>
     </div>
   );
 }

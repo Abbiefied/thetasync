@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { Users, Calendar, MessageCircle, BookOpen, Plus, Settings, Edit, Trash2 } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Users, Calendar, MessageCircle, BookOpen, Plus, Settings, Edit, Trash2, ChevronLeft } from 'lucide-react';
 import { StudyGroup } from '../types';
 import { useStudyGroups } from '../hooks/useStudyGroups';
 import { useAuth } from '../context/AuthContext';
@@ -8,6 +8,7 @@ import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
 export default function MyGroups() {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { userGroups, fetchUserGroups, deleteGroup, isLoading } = useStudyGroups();
   const [activeTab, setActiveTab] = useState('joined');
@@ -82,6 +83,17 @@ export default function MyGroups() {
   return (
     <div className="min-h-screen bg-neutral-50 pt-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Back Navigation */}
+        <div className="mb-6">
+          <button
+            onClick={() => navigate('/homepage')}
+            className="flex items-center text-neutral-600 hover:text-neutral-900 transition-colors"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Back to Homepage
+          </button>
+        </div>
+
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
           <div>
@@ -144,13 +156,15 @@ export default function MyGroups() {
                         {/* Show edit/delete options only for group owners */}
                         {isOwner && (
                           <div className="flex items-center space-x-2">
-                            <button 
-                              className="p-2 text-neutral-400 hover:text-blue-600 transition-colors"
-                              aria-label="Edit group"
-                              title="Edit group"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
+                            <Link to={`/group/${group.id}`}>
+                              <button 
+                                className="p-2 text-neutral-400 hover:text-blue-600 transition-colors"
+                                aria-label="Edit group"
+                                title="Edit group"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </button>
+                            </Link>
                             <button 
                               onClick={() => setShowDeleteConfirm(group.id)}
                               className="p-2 text-neutral-400 hover:text-red-600 transition-colors"
