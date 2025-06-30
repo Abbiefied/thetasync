@@ -15,12 +15,16 @@ export function useStudyGroups() {
     setIsLoading(true);
     try {
       const { data, error } = await api.getPublicStudyGroups();
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching public groups:', error);
+        addNotification('error', 'Failed to load study groups. Please check your connection.');
+        return;
+      }
       
       dispatch({ type: 'SET_STUDY_GROUPS', payload: data || [] });
     } catch (error) {
       console.error('Error fetching public groups:', error);
-      addNotification('error', 'Failed to load study groups');
+      addNotification('error', 'Failed to load study groups. Please check your connection.');
     } finally {
       setIsLoading(false);
     }
@@ -33,7 +37,11 @@ export function useStudyGroups() {
     setIsLoading(true);
     try {
       const { data, error } = await api.getUserStudyGroups(user.id);
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user groups:', error);
+        addNotification('error', 'Failed to load your groups');
+        return;
+      }
       
       dispatch({ type: 'SET_USER_GROUPS', payload: data || [] });
     } catch (error) {
@@ -58,7 +66,11 @@ export function useStudyGroups() {
     setIsLoading(true);
     try {
       const { data, error } = await api.createStudyGroup(groupData);
-      if (error) throw error;
+      if (error) {
+        console.error('Error creating group:', error);
+        addNotification('error', 'Failed to create study group');
+        return { data: null, error };
+      }
       
       dispatch({ type: 'ADD_STUDY_GROUP', payload: data });
       addNotification('success', 'Study group created successfully!');
@@ -77,7 +89,11 @@ export function useStudyGroups() {
     setIsLoading(true);
     try {
       const { data, error } = await api.updateStudyGroup(groupId, updates);
-      if (error) throw error;
+      if (error) {
+        console.error('Error updating group:', error);
+        addNotification('error', 'Failed to update study group');
+        return { data: null, error };
+      }
       
       dispatch({ type: 'UPDATE_STUDY_GROUP', payload: { id: groupId, updates } });
       addNotification('success', 'Study group updated successfully!');
@@ -96,7 +112,11 @@ export function useStudyGroups() {
     setIsLoading(true);
     try {
       const { error } = await api.deleteStudyGroup(groupId);
-      if (error) throw error;
+      if (error) {
+        console.error('Error deleting group:', error);
+        addNotification('error', 'Failed to delete study group');
+        return { error };
+      }
       
       dispatch({ type: 'REMOVE_STUDY_GROUP', payload: groupId });
       addNotification('success', 'Study group deleted successfully!');
@@ -112,12 +132,21 @@ export function useStudyGroups() {
 
   // Join a study group
   const joinGroup = async (groupId: string, expertise: 'Beginner' | 'Intermediate' | 'Advanced') => {
+    if (!user) {
+      addNotification('error', 'Please log in to join a group');
+      return { data: null, error: new Error('User not authenticated') };
+    }
+
     setIsLoading(true);
     try {
       const { data, error } = await api.joinStudyGroup(groupId, expertise);
-      if (error) throw error;
+      if (error) {
+        console.error('Error joining group:', error);
+        addNotification('error', 'Failed to join study group');
+        return { data: null, error };
+      }
       
-      // Refresh user groups
+      // Refresh user groups to include the newly joined group
       await fetchUserGroups();
       addNotification('success', 'Successfully joined the study group!');
       return { data, error: null };
@@ -132,12 +161,21 @@ export function useStudyGroups() {
 
   // Leave a study group
   const leaveGroup = async (groupId: string) => {
+    if (!user) {
+      addNotification('error', 'Please log in to leave a group');
+      return { error: new Error('User not authenticated') };
+    }
+
     setIsLoading(true);
     try {
       const { error } = await api.leaveStudyGroup(groupId);
-      if (error) throw error;
+      if (error) {
+        console.error('Error leaving group:', error);
+        addNotification('error', 'Failed to leave study group');
+        return { error };
+      }
       
-      // Refresh user groups
+      // Refresh user groups to remove the left group
       await fetchUserGroups();
       addNotification('success', 'Successfully left the study group');
       return { error: null };
