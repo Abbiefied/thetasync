@@ -87,6 +87,21 @@ export default function GroupWorkspace() {
   });
   const [isSaving, setIsSaving] = useState(false);
 
+  // Initialize edit data only once when group is first loaded
+  useEffect(() => {
+    if (group && editData.name === '' && editData.description === '') {
+      setEditData({
+        name: group.name,
+        description: group.description,
+        schedule: (group.schedule || []).map(slot => ({
+          day: slot.day,
+          start_time: slot.startTime,
+          end_time: slot.endTime
+        }))
+      });
+    }
+  }, [group, editData.name, editData.description]);
+
   useEffect(() => {
     const fetchGroupData = async () => {
       if (!id) {
@@ -106,17 +121,6 @@ export default function GroupWorkspace() {
         } else if (data) {
           console.log('Group data fetched successfully:', data);
           setGroup(data);
-          
-          // Set edit data
-          setEditData({
-            name: data.name,
-            description: data.description,
-            schedule: (data.schedule || []).map(slot => ({
-              day: slot.day,
-              start_time: slot.startTime,
-              end_time: slot.endTime
-            }))
-          });
           
           // Find the group owner's name
           const owner = data.members?.find(member => member.role === 'Owner');
@@ -212,15 +216,17 @@ export default function GroupWorkspace() {
   };
 
   const handleCancelEdit = () => {
-    setEditData({
-      name: group?.name || '',
-      description: group?.description || '',
-      schedule: (group?.schedule || []).map(slot => ({
-        day: slot.day,
-        start_time: slot.startTime,
-        end_time: slot.endTime
-      }))
-    });
+    if (group) {
+      setEditData({
+        name: group.name,
+        description: group.description,
+        schedule: (group.schedule || []).map(slot => ({
+          day: slot.day,
+          start_time: slot.startTime,
+          end_time: slot.endTime
+        }))
+      });
+    }
     setIsEditing(false);
   };
 
