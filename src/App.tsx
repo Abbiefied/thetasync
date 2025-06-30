@@ -16,6 +16,7 @@ import MyGroups from './pages/MyGroups';
 import CreateGroup from './pages/CreateGroup';
 import JoinGroup from './pages/JoinGroup';
 import GroupWorkspace from './pages/GroupWorkspace';
+import GroupResources from './pages/GroupResources';
 import Resources from './pages/Resources';
 import Leaderboard from './pages/Leaderboard';
 import TestSupabase from './pages/TestSupabase';
@@ -66,6 +67,11 @@ function App() {
           <Route path="/group/:id" element={
             <ProtectedRoute>
               <GroupWorkspace />
+            </ProtectedRoute>
+          } />
+          <Route path="/group/:id/resources" element={
+            <ProtectedRoute>
+              <GroupResources />
             </ProtectedRoute>
           } />
           <Route path="/resources" element={

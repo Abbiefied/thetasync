@@ -70,6 +70,7 @@ type AppAction =
   // Resource actions
   | { type: 'SET_RESOURCES'; payload: Resource[] }
   | { type: 'ADD_RESOURCE'; payload: Resource }
+  | { type: 'UPDATE_RESOURCE'; payload: { id: string; updates: Partial<Resource> } }
   | { type: 'REMOVE_RESOURCE'; payload: string }
   
   // Message actions
@@ -198,6 +199,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, resources: action.payload };
     case 'ADD_RESOURCE':
       return { ...state, resources: [action.payload, ...state.resources] };
+    case 'UPDATE_RESOURCE':
+      return {
+        ...state,
+        resources: state.resources.map(resource =>
+          resource.id === action.payload.id ? { ...resource, ...action.payload.updates } : resource
+        )
+      };
     case 'REMOVE_RESOURCE':
       return { ...state, resources: state.resources.filter(resource => resource.id !== action.payload) };
     

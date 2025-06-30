@@ -533,10 +533,17 @@ export default function GroupWorkspace() {
               <div className="p-6 space-y-6 overflow-y-auto">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-neutral-900">Shared Resources</h3>
-                  <Button size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Upload Resource
-                  </Button>
+                  <div className="flex space-x-3">
+                    <Link to={`/group/${id}/resources`}>
+                      <Button variant="outline" size="sm">
+                        View All Resources
+                      </Button>
+                    </Link>
+                    <Button size="sm">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Upload Resource
+                    </Button>
+                  </div>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

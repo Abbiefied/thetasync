@@ -66,6 +66,36 @@ export function useResources() {
     }
   };
 
+  // Update a resource
+  const updateResource = async (resourceId: string, updates: {
+    title?: string;
+    description?: string;
+    type?: 'document' | 'video' | 'link' | 'image';
+    url?: string;
+    tags?: string[];
+  }) => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await api.updateResource(resourceId, updates);
+      if (error) throw error;
+      
+      // Update the resource in the state
+      dispatch({ 
+        type: 'UPDATE_RESOURCE', 
+        payload: { id: resourceId, updates } 
+      });
+      
+      addNotification('success', 'Resource updated successfully!');
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error updating resource:', error);
+      addNotification('error', 'Failed to update resource');
+      return { data: null, error };
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Delete a resource
   const deleteResource = async (resourceId: string) => {
     setIsLoading(true);
@@ -91,6 +121,7 @@ export function useResources() {
     fetchGroupResources,
     fetchAllResources,
     createResource,
+    updateResource,
     deleteResource
   };
 }

@@ -493,7 +493,30 @@ export const createResource = async (resourceData: {
       ...resourceData,
       uploaded_by: user.id
     })
-    .select()
+    .select(`
+      *,
+      user_profiles!resources_uploaded_by_fkey(name)
+    `)
+    .single();
+  
+  return { data, error };
+};
+
+export const updateResource = async (resourceId: string, updates: {
+  title?: string;
+  description?: string;
+  type?: 'document' | 'video' | 'link' | 'image';
+  url?: string;
+  tags?: string[];
+}) => {
+  const { data, error } = await supabase
+    .from('resources')
+    .update(updates)
+    .eq('id', resourceId)
+    .select(`
+      *,
+      user_profiles!resources_uploaded_by_fkey(name)
+    `)
     .single();
   
   return { data, error };
@@ -740,7 +763,10 @@ export const updateMessage = async (messageId: string, updates: {
 }) => {
   const { data, error } = await supabase
     .from('messages')
-    .update(updates)
+    .update({
+      ...updates,
+      is_edited: true
+    })
     .eq('id', messageId)
     .select(`
       *,
