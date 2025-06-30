@@ -150,6 +150,18 @@ export function useStudyGroups() {
     }
   };
 
+  // Check if user is a member of a group
+  const isUserMember = (groupId: string) => {
+    if (!user) return false;
+    return state.userGroups.some(group => group.id === groupId);
+  };
+
+  // Check if user is the owner of a group
+  const isUserOwner = (groupId: string) => {
+    if (!user) return false;
+    return state.userGroups.some(group => group.id === groupId && group.createdBy === user.id);
+  };
+
   return {
     studyGroups: state.studyGroups,
     userGroups: state.userGroups,
@@ -161,6 +173,8 @@ export function useStudyGroups() {
     updateGroup,
     deleteGroup,
     joinGroup,
-    leaveGroup
+    leaveGroup,
+    isUserMember,
+    isUserOwner
   };
 }

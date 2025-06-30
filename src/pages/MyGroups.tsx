@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Users, Calendar, MessageCircle, BookOpen, Plus, Settings } from 'lucide-react';
+import { Users, Calendar, MessageCircle, BookOpen, Plus, Settings, Edit, Trash2 } from 'lucide-react';
 import { StudyGroup } from '../types';
 import { useStudyGroups } from '../hooks/useStudyGroups';
 import { useAuth } from '../context/AuthContext';
@@ -9,8 +9,9 @@ import Card from '../components/common/Card';
 
 export default function MyGroups() {
   const { user } = useAuth();
-  const { userGroups, fetchUserGroups, isLoading } = useStudyGroups();
+  const { userGroups, fetchUserGroups, deleteGroup, isLoading } = useStudyGroups();
   const [activeTab, setActiveTab] = useState('joined');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -18,6 +19,7 @@ export default function MyGroups() {
     }
   }, [user]);
 
+  // Filter groups based on ownership
   const joinedGroups = userGroups.filter(group => group.createdBy !== user?.id);
   const ownedGroups = userGroups.filter(group => group.createdBy === user?.id);
   
@@ -28,6 +30,13 @@ export default function MyGroups() {
     // Simplified - just return the first scheduled session
     const session = schedule[0];
     return `Next ${session.day} at ${session.startTime}`;
+  };
+
+  const handleDeleteGroup = async (groupId: string) => {
+    const { error } = await deleteGroup(groupId);
+    if (!error) {
+      setShowDeleteConfirm(null);
+    }
   };
 
   if (isLoading) {
@@ -99,58 +108,74 @@ export default function MyGroups() {
           <div className="p-6">
             {displayGroups.length > 0 ? (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {displayGroups.map((group) => (
-                  <Card key={group.id} hover className="relative">
-                    <div className="flex justify-between items-start mb-4">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-semibold text-neutral-900 mb-1">
-                          {group.name}
-                        </h3>
-                        <p className="text-sm text-neutral-600 mb-2">{group.subject}</p>
-                        <p className="text-sm text-neutral-500 line-clamp-2">
-                          {group.description}
-                        </p>
+                {displayGroups.map((group) => {
+                  const isOwner = group.createdBy === user?.id;
+                  
+                  return (
+                    <Card key={group.id} hover className="relative">
+                      <div className="flex justify-between items-start mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-lg font-semibold text-neutral-900 mb-1">
+                            {group.name}
+                          </h3>
+                          <p className="text-sm text-neutral-600 mb-2">{group.subject}</p>
+                          <p className="text-sm text-neutral-500 line-clamp-2">
+                            {group.description}
+                          </p>
+                        </div>
+                        
+                        {/* Show edit/delete options only for group owners */}
+                        {isOwner && (
+                          <div className="flex items-center space-x-2">
+                            <button 
+                              className="p-2 text-neutral-400 hover:text-blue-600 transition-colors"
+                              aria-label="Edit group"
+                              title="Edit group"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button 
+                              onClick={() => setShowDeleteConfirm(group.id)}
+                              className="p-2 text-neutral-400 hover:text-red-600 transition-colors"
+                              aria-label="Delete group"
+                              title="Delete group"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        )}
                       </div>
-                      
-                      {group.createdBy === user?.id && (
-                        <button 
-                          className="p-2 text-neutral-400 hover:text-neutral-600 transition-colors"
-                          aria-label="Group settings"
-                        >
-                          <Settings className="w-5 h-5" />
-                        </button>
-                      )}
-                    </div>
 
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center text-sm text-neutral-500">
-                        <Users className="w-4 h-4 mr-2" />
-                        {group.members?.length || 0} members
+                      <div className="space-y-3 mb-6">
+                        <div className="flex items-center text-sm text-neutral-500">
+                          <Users className="w-4 h-4 mr-2" />
+                          {group.members?.length || 0} members
+                        </div>
+                        
+                        <div className="flex items-center text-sm text-neutral-500">
+                          <Calendar className="w-4 h-4 mr-2" />
+                          {getNextSession(group.schedule)}
+                        </div>
                       </div>
-                      
-                      <div className="flex items-center text-sm text-neutral-500">
-                        <Calendar className="w-4 h-4 mr-2" />
-                        {getNextSession(group.schedule)}
-                      </div>
-                    </div>
 
-                    <div className="flex space-x-2">
-                      <Link to={`/group/${group.id}`} className="flex-1">
-                        <Button variant="outline" size="sm" className="w-full">
-                          <MessageCircle className="w-4 h-4 mr-2" />
-                          View Group
-                        </Button>
-                      </Link>
-                      
-                      <Link to={`/group/${group.id}/resources`} className="flex-1">
-                        <Button variant="ghost" size="sm" className="w-full">
-                          <BookOpen className="w-4 h-4 mr-2" />
-                          Resources
-                        </Button>
-                      </Link>
-                    </div>
-                  </Card>
-                ))}
+                      <div className="flex space-x-2">
+                        <Link to={`/group/${group.id}`} className="flex-1">
+                          <Button variant="outline" size="sm" className="w-full">
+                            <MessageCircle className="w-4 h-4 mr-2" />
+                            View Group
+                          </Button>
+                        </Link>
+                        
+                        <Link to={`/group/${group.id}/resources`} className="flex-1">
+                          <Button variant="ghost" size="sm" className="w-full">
+                            <BookOpen className="w-4 h-4 mr-2" />
+                            Resources
+                          </Button>
+                        </Link>
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-12">
@@ -200,6 +225,33 @@ export default function MyGroups() {
               </div>
               <div className="text-sm text-neutral-600">Study Partners</div>
             </Card>
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {showDeleteConfirm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <h3 className="text-lg font-semibold text-neutral-900 mb-2">Delete Study Group</h3>
+              <p className="text-neutral-600 mb-6">
+                Are you sure you want to delete this study group? This action cannot be undone and will remove all associated data.
+              </p>
+              <div className="flex space-x-3">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(null)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => handleDeleteGroup(showDeleteConfirm)}
+                  className="flex-1 bg-red-600 hover:bg-red-700"
+                >
+                  Delete
+                </Button>
+              </div>
+            </div>
           </div>
         )}
       </div>

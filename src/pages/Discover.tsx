@@ -3,36 +3,21 @@ import { Link } from 'react-router-dom';
 import { Search, Filter, Users, Clock, Star, Plus } from 'lucide-react';
 import { StudyGroup } from '../types';
 import { useStudyGroups } from '../hooks/useStudyGroups';
-import { createDemoGroups } from '../lib/api';
+import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
 export default function Discover() {
-  const { studyGroups, fetchPublicGroups, isLoading } = useStudyGroups();
+  const { user } = useAuth();
+  const { studyGroups, fetchPublicGroups, isLoading, isUserMember } = useStudyGroups();
   const [filteredGroups, setFilteredGroups] = useState<StudyGroup[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
-  const [demoCreated, setDemoCreated] = useState(false);
 
   useEffect(() => {
-    const initializeData = async () => {
-      await fetchPublicGroups();
-      
-      // Create demo groups if none exist and haven't been created yet
-      if (!demoCreated && studyGroups.length === 0) {
-        try {
-          await createDemoGroups();
-          setDemoCreated(true);
-          await fetchPublicGroups(); // Refresh after creating demo groups
-        } catch (error) {
-          console.error('Error creating demo groups:', error);
-        }
-      }
-    };
-
-    initializeData();
-  }, [demoCreated]);
+    fetchPublicGroups();
+  }, []);
 
   useEffect(() => {
     let filtered = studyGroups;
@@ -172,61 +157,76 @@ export default function Discover() {
         {/* Groups Grid */}
         {filteredGroups.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-            {filteredGroups.map((group) => (
-              <Card key={group.id} hover className="flex flex-col h-full">
-                <div className="flex-1">
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="text-lg font-semibold text-neutral-900 line-clamp-2">
-                      {group.name}
-                    </h3>
-                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(group.difficulty)}`}>
-                      {group.difficulty}
-                    </span>
-                  </div>
+            {filteredGroups.map((group) => {
+              const isMember = isUserMember(group.id);
+              const isOwner = group.createdBy === user?.id;
+              const isGroupFull = (group.memberCount || 0) >= group.maxMembers;
 
-                  <p className="text-neutral-600 text-sm mb-4 line-clamp-3">
-                    {group.description}
-                  </p>
-
-                  <div className="space-y-3 mb-4">
-                    <div className="flex items-center text-sm text-neutral-500">
-                      <Users className="w-4 h-4 mr-2" />
-                      {group.memberCount || 0} of {group.maxMembers} members
+              return (
+                <Card key={group.id} hover className="flex flex-col h-full">
+                  <div className="flex-1">
+                    <div className="flex items-start justify-between mb-3">
+                      <h3 className="text-lg font-semibold text-neutral-900 line-clamp-2">
+                        {group.name}
+                      </h3>
+                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getDifficultyColor(group.difficulty)}`}>
+                        {group.difficulty}
+                      </span>
                     </div>
 
-                    <div className="flex items-center text-sm text-neutral-500">
-                      <Clock className="w-4 h-4 mr-2" />
-                      {getScheduleText(group.schedule)}
+                    <p className="text-neutral-600 text-sm mb-4 line-clamp-3">
+                      {group.description}
+                    </p>
+
+                    <div className="space-y-3 mb-4">
+                      <div className="flex items-center text-sm text-neutral-500">
+                        <Users className="w-4 h-4 mr-2" />
+                        {group.memberCount || 0} of {group.maxMembers} members
+                      </div>
+
+                      <div className="flex items-center text-sm text-neutral-500">
+                        <Clock className="w-4 h-4 mr-2" />
+                        {getScheduleText(group.schedule)}
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {(group.tags || []).slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className="px-2 py-1 bg-neutral-100 text-neutral-600 rounded-md text-xs"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                      {(group.tags || []).length > 3 && (
+                        <span className="px-2 py-1 bg-neutral-100 text-neutral-600 rounded-md text-xs">
+                          +{(group.tags || []).length - 3} more
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {(group.tags || []).slice(0, 3).map((tag) => (
-                      <span
-                        key={tag}
-                        className="px-2 py-1 bg-neutral-100 text-neutral-600 rounded-md text-xs"
+                  {/* Show different buttons based on user's relationship to the group */}
+                  {isMember || isOwner ? (
+                    <Link to={`/group/${group.id}`}>
+                      <Button className="w-full">
+                        View Group
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link to={`/group/${group.id}/join`}>
+                      <Button 
+                        className="w-full"
+                        disabled={isGroupFull}
                       >
-                        {tag}
-                      </span>
-                    ))}
-                    {(group.tags || []).length > 3 && (
-                      <span className="px-2 py-1 bg-neutral-100 text-neutral-600 rounded-md text-xs">
-                        +{(group.tags || []).length - 3} more
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                <Link to={`/group/${group.id}/join`}>
-                  <Button 
-                    className="w-full"
-                    disabled={(group.memberCount || 0) >= group.maxMembers}
-                  >
-                    {(group.memberCount || 0) >= group.maxMembers ? 'Group Full' : 'Join Group'}
-                  </Button>
-                </Link>
-              </Card>
-            ))}
+                        {isGroupFull ? 'Group Full' : 'Join Group'}
+                      </Button>
+                    </Link>
+                  )}
+                </Card>
+              );
+            })}
           </div>
         ) : (
           <div className="text-center py-12">

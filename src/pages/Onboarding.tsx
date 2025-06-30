@@ -125,10 +125,10 @@ export default function Onboarding() {
       return;
     }
 
-    // If user already has a profile, redirect to homepage
+    // If user already has a profile, redirect to discover page instead of homepage
     if (userProfile) {
-      console.log('User already has profile, redirecting to homepage');
-      navigate('/homepage');
+      console.log('User already has profile, redirecting to discover');
+      navigate('/discover');
       return;
     }
 
@@ -273,8 +273,9 @@ export default function Onboarding() {
       // Refresh the profile in context
       await refreshProfile();
       
-      console.log('Profile refresh complete, navigating to homepage');
-      navigate('/homepage');
+      console.log('Profile refresh complete, navigating to discover');
+      // Navigate to discover page instead of homepage
+      navigate('/discover');
     } catch (error) {
       console.error('Profile creation error:', error);
       setErrors({ general: 'An unexpected error occurred while creating your profile. Please try again.' });
