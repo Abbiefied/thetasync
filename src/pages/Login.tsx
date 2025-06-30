@@ -62,9 +62,11 @@ export default function Login() {
       setErrors({}); // Clear any previous errors
       
       try {
+        console.log('Attempting to sign in with:', data.email);
         const { data: authData, error } = await signIn(data.email, data.password);
         
         if (error) {
+          console.error('Sign in error:', error);
           if (error.message.includes('Invalid login credentials')) {
             setErrors({ general: 'Invalid email or password. Please check your credentials and try again.' });
           } else if (error.message.includes('Email not confirmed')) {
@@ -73,11 +75,14 @@ export default function Login() {
             setErrors({ general: error.message });
           }
         } else if (authData.user) {
+          console.log('Sign in successful for:', authData.user.email);
           // Clear form data on successful login
           setData({ email: '', password: '' });
           
-          // Navigate immediately - the auth context will handle the rest
-          navigate(from, { replace: true });
+          // Navigate after a short delay to allow auth context to update
+          setTimeout(() => {
+            navigate(from, { replace: true });
+          }, 100);
         }
       } catch (error) {
         console.error('Login error:', error);

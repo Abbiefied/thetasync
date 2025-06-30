@@ -64,6 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        console.log('Initial session:', session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -105,27 +106,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         console.log('Auth state change:', event, session?.user?.email);
         
-        // Handle different auth events
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            try {
-              const { data: profile } = await getUserProfile(session.user.id);
-              if (mounted) {
-                setUserProfile(profile);
-              }
-            } catch (error) {
-              console.error('Error loading profile after auth change:', error);
-              if (mounted) {
-                setUserProfile(null);
-              }
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        if (event === 'SIGNED_IN' && session?.user) {
+          try {
+            const { data: profile } = await getUserProfile(session.user.id);
+            if (mounted) {
+              setUserProfile(profile);
+            }
+          } catch (error) {
+            console.error('Error loading profile after sign in:', error);
+            if (mounted) {
+              setUserProfile(null);
             }
           }
         } else if (event === 'SIGNED_OUT') {
-          setSession(null);
-          setUser(null);
           setUserProfile(null);
         }
         
