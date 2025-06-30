@@ -70,7 +70,7 @@ export default function Landing() {
           className="block hover:scale-105 transition-transform duration-300"
         >
           <img
-            src="/white_circle_360x360.png"
+            src="/white_circle.png"
             alt="Built on Bolt"
             className="w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 object-contain animate-fade-in hover:opacity-90 transition-opacity"
             style={{ animationDelay: '0.3s' }}
