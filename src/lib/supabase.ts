@@ -3,11 +3,16 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+// Fallback to empty strings if environment variables are not set
+// This prevents the app from crashing, but will show connection errors
+const url = supabaseUrl || '';
+const key = supabaseAnonKey || '';
+
 if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Missing Supabase environment variables');
+  console.error('Missing Supabase environment variables. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY');
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const supabase = createClient(url, key);
 
 // Auth helper functions
 export const signUp = async (email: string, password: string, userData: any) => {
