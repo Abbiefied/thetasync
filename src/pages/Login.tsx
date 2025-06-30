@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Users, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 import { signIn, signInWithGoogle } from '../lib/supabase';
+import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -17,6 +18,7 @@ interface ValidationErrors {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { loading: authLoading } = useAuth();
   const from = location.state?.from?.pathname || '/homepage';
   
   const [data, setData] = useState<LoginData>({
@@ -66,7 +68,11 @@ export default function Login() {
         
         const { data: authData, error } = await signIn(data.email, data.password);
         
-        console.log('Sign in response:', { authData, error });
+        console.log('Sign in response:', { 
+          user: authData?.user?.email || 'No user',
+          session: authData?.session ? 'Session exists' : 'No session',
+          error: error?.message || 'No error'
+        });
         
         if (error) {
           console.error('Sign in error:', error);
@@ -80,19 +86,19 @@ export default function Login() {
           } else {
             setErrors({ general: error.message || 'An error occurred during sign in.' });
           }
-        } else if (authData?.user) {
+        } else if (authData?.user && authData?.session) {
           console.log('Sign in successful, user:', authData.user.email);
           
           // Clear form data on successful login
           setData({ email: '', password: '' });
           
-          // Small delay to ensure auth state is updated
+          // Wait for auth context to update, then navigate
           setTimeout(() => {
             console.log('Navigating to:', from);
             navigate(from, { replace: true });
-          }, 100);
+          }, 500);
         } else {
-          console.error('No user data returned');
+          console.error('No user data or session returned');
           setErrors({ general: 'Sign in failed. Please try again.' });
         }
       } catch (error) {
@@ -135,6 +141,15 @@ export default function Login() {
       </div>
     );
   };
+
+  // Show loading if auth is still initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4">

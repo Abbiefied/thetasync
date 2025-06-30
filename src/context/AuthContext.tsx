@@ -23,7 +23,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     if (user) {
       try {
+        console.log('Refreshing profile for user:', user.email);
         const { data: profile } = await getUserProfile(user.id);
+        console.log('Profile refreshed:', profile ? 'Found' : 'Not found');
         setUserProfile(profile);
       } catch (error) {
         console.error('Error refreshing profile:', error);
@@ -34,6 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleSignOut = async () => {
     try {
+      console.log('Signing out user...');
       // Clear state immediately for better UX
       setUser(null);
       setUserProfile(null);
@@ -43,6 +46,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign out error:', error);
+      } else {
+        console.log('Sign out successful');
       }
     } catch (error) {
       console.error('Sign out error:', error);
@@ -112,8 +117,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log('Auth state change:', event, session?.user?.email || 'No user');
         
         // Handle different auth events
-        if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-          console.log('User signed in or token refreshed');
+        if (event === 'SIGNED_IN') {
+          console.log('User signed in');
           setSession(session);
           setUser(session?.user ?? null);
           
@@ -124,15 +129,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               if (mounted) {
                 console.log('Profile after sign in:', profile ? 'Found' : 'Not found');
                 setUserProfile(profile);
+                setLoading(false);
               }
             } catch (error) {
               console.error('Error loading profile after auth change:', error);
               if (mounted) {
                 setUserProfile(null);
+                setLoading(false);
               }
             }
+          } else {
+            if (mounted) {
+              setLoading(false);
+            }
           }
-          
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed');
+          setSession(session);
+          setUser(session?.user ?? null);
+          // Don't reload profile on token refresh, just update session
           if (mounted) {
             setLoading(false);
           }
@@ -142,6 +157,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser(null);
           setUserProfile(null);
           
+          if (mounted) {
+            setLoading(false);
+          }
+        } else {
+          // For other events, just update loading state
           if (mounted) {
             setLoading(false);
           }
