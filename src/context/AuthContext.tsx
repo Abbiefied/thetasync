@@ -55,6 +55,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       try {
+        console.log('Getting initial session...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!mounted) return;
@@ -65,13 +66,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        console.log('Initial session:', session?.user?.email || 'No session');
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
           try {
+            console.log('Loading profile for user:', session.user.email);
             const { data: profile } = await getUserProfile(session.user.id);
             if (mounted) {
+              console.log('Profile loaded:', profile ? 'Found' : 'Not found');
               setUserProfile(profile);
             }
           } catch (profileError) {
@@ -104,17 +109,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         if (!mounted) return;
         
-        console.log('Auth state change:', event, session?.user?.email);
+        console.log('Auth state change:', event, session?.user?.email || 'No user');
         
         // Handle different auth events
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
+          console.log('User signed in or token refreshed');
           setSession(session);
           setUser(session?.user ?? null);
           
           if (session?.user) {
             try {
+              console.log('Loading profile after sign in...');
               const { data: profile } = await getUserProfile(session.user.id);
               if (mounted) {
+                console.log('Profile after sign in:', profile ? 'Found' : 'Not found');
                 setUserProfile(profile);
               }
             } catch (error) {
@@ -124,14 +132,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }
             }
           }
+          
+          if (mounted) {
+            setLoading(false);
+          }
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setSession(null);
           setUser(null);
           setUserProfile(null);
-        }
-        
-        if (mounted) {
-          setLoading(false);
+          
+          if (mounted) {
+            setLoading(false);
+          }
         }
       }
     );

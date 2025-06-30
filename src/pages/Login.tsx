@@ -62,25 +62,41 @@ export default function Login() {
       setErrors({}); // Clear any previous errors
       
       try {
+        console.log('Attempting to sign in with:', data.email);
+        
         const { data: authData, error } = await signIn(data.email, data.password);
         
+        console.log('Sign in response:', { authData, error });
+        
         if (error) {
+          console.error('Sign in error:', error);
+          
           if (error.message.includes('Invalid login credentials')) {
             setErrors({ general: 'Invalid email or password. Please check your credentials and try again.' });
           } else if (error.message.includes('Email not confirmed')) {
             setErrors({ general: 'Please check your email and click the confirmation link before signing in.' });
+          } else if (error.message.includes('Too many requests')) {
+            setErrors({ general: 'Too many login attempts. Please wait a moment and try again.' });
           } else {
-            setErrors({ general: error.message });
+            setErrors({ general: error.message || 'An error occurred during sign in.' });
           }
-        } else if (authData.user) {
+        } else if (authData?.user) {
+          console.log('Sign in successful, user:', authData.user.email);
+          
           // Clear form data on successful login
           setData({ email: '', password: '' });
           
-          // Navigate immediately - the auth context will handle the rest
-          navigate(from, { replace: true });
+          // Small delay to ensure auth state is updated
+          setTimeout(() => {
+            console.log('Navigating to:', from);
+            navigate(from, { replace: true });
+          }, 100);
+        } else {
+          console.error('No user data returned');
+          setErrors({ general: 'Sign in failed. Please try again.' });
         }
       } catch (error) {
-        console.error('Login error:', error);
+        console.error('Unexpected login error:', error);
         setErrors({ general: 'An unexpected error occurred. Please try again.' });
       } finally {
         setIsLoading(false);
@@ -93,15 +109,18 @@ export default function Login() {
     setErrors({}); // Clear any previous errors
     
     try {
+      console.log('Attempting Google sign in');
+      
       const { error } = await signInWithGoogle();
       
       if (error) {
-        setErrors({ general: error.message });
+        console.error('Google sign in error:', error);
+        setErrors({ general: error.message || 'Google sign-in failed. Please try again.' });
         setIsGoogleLoading(false);
       }
       // If successful, the auth state change will handle navigation
     } catch (error) {
-      console.error('Google sign-in error:', error);
+      console.error('Unexpected Google sign-in error:', error);
       setErrors({ general: 'Google sign-in failed. Please try again.' });
       setIsGoogleLoading(false);
     }
