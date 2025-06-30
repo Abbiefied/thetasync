@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        console.log('Initial session:', session?.user?.email);
+        console.log('Initial session:', session?.user?.email || 'No session');
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         if (!mounted) return;
         
-        console.log('Auth state change:', event, session?.user?.email);
+        console.log('Auth state change:', event, session?.user?.email || 'No session');
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -122,7 +122,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
           }
         } else if (event === 'SIGNED_OUT') {
-          setUserProfile(null);
+          if (mounted) {
+            setUserProfile(null);
+          }
         }
         
         if (mounted) {
