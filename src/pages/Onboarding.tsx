@@ -110,25 +110,32 @@ export default function Onboarding() {
 
   const totalSteps = 4;
 
-  // Redirect if not authenticated
+  // Handle authentication and profile state
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/signup');
-      return;
-    }
+    console.log('Onboarding - Loading:', loading, 'User:', !!user, 'Profile:', !!userProfile);
+    
+    if (!loading) {
+      if (!user) {
+        console.log('No user in onboarding, redirecting to signup');
+        navigate('/signup');
+        return;
+      }
 
-    // Redirect if user already has a profile
-    if (!loading && user && userProfile) {
-      navigate('/homepage');
-      return;
-    }
+      // If user already has a profile, redirect to homepage
+      if (userProfile) {
+        console.log('User already has profile, redirecting to homepage');
+        navigate('/homepage');
+        return;
+      }
 
-    // Pre-fill user data from auth
-    if (user && !userProfile) {
-      setData(prev => ({
-        ...prev,
-        name: user.user_metadata?.full_name || '',
-      }));
+      // Pre-fill user data from auth
+      if (user && !userProfile) {
+        console.log('Setting up onboarding for user:', user.email);
+        setData(prev => ({
+          ...prev,
+          name: user.user_metadata?.full_name || '',
+        }));
+      }
     }
   }, [user, userProfile, loading, navigate]);
 
@@ -228,6 +235,8 @@ export default function Onboarding() {
     setIsLoading(true);
     
     try {
+      console.log('Creating profile for user:', user.id);
+      
       // Prepare profile data
       const profileData = {
         name: data.name,
@@ -248,6 +257,8 @@ export default function Onboarding() {
         })
       };
 
+      console.log('Profile data:', profileData);
+
       const { error: profileError } = await createUserProfile(user.id, profileData);
 
       if (profileError) {
@@ -255,6 +266,8 @@ export default function Onboarding() {
         setErrors({ general: 'Failed to create profile. Please try again.' });
         return;
       }
+
+      console.log('Profile created successfully');
 
       // Refresh the profile in context
       await refreshProfile();
@@ -325,7 +338,10 @@ export default function Onboarding() {
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading...</p>
+        </div>
       </div>
     );
   }

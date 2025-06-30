@@ -16,6 +16,7 @@ export const supabase = createClient(url, key);
 
 // Auth helper functions
 export const signUp = async (email: string, password: string, userData: any) => {
+  console.log('Signing up user:', email);
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
@@ -24,29 +25,36 @@ export const signUp = async (email: string, password: string, userData: any) => 
       emailRedirectTo: `${window.location.origin}/onboarding`
     }
   });
+  console.log('Sign up result:', data?.user?.email || 'No user', error?.message || 'No error');
   return { data, error };
 };
 
 export const signIn = async (email: string, password: string) => {
+  console.log('Signing in user:', email);
   const { data, error } = await supabase.auth.signInWithPassword({
     email,
     password
   });
+  console.log('Sign in result:', data?.user?.email || 'No user', error?.message || 'No error');
   return { data, error };
 };
 
 export const signInWithGoogle = async () => {
+  console.log('Signing in with Google');
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
     options: {
       redirectTo: `${window.location.origin}/onboarding`
     }
   });
+  console.log('Google sign in result:', error?.message || 'No error');
   return { data, error };
 };
 
 export const signOut = async () => {
+  console.log('Signing out user');
   const { error } = await supabase.auth.signOut();
+  console.log('Sign out result:', error?.message || 'Success');
   return { error };
 };
 
@@ -57,6 +65,7 @@ export const getCurrentUser = async () => {
 
 // Database helper functions
 export const createUserProfile = async (userId: string, profileData: any) => {
+  console.log('Creating user profile for:', userId);
   const { data, error } = await supabase
     .from('user_profiles')
     .insert([{
@@ -65,15 +74,18 @@ export const createUserProfile = async (userId: string, profileData: any) => {
     }])
     .select()
     .single();
+  console.log('Profile creation result:', data?.id || 'No data', error?.message || 'No error');
   return { data, error };
 };
 
 export const getUserProfile = async (userId: string) => {
+  console.log('Getting user profile for:', userId);
   const { data, error } = await supabase
     .from('user_profiles')
     .select('*')
     .eq('id', userId)
     .maybeSingle();
+  console.log('Profile fetch result:', data?.id || 'No profile found', error?.message || 'No error');
   return { data, error };
 };
 

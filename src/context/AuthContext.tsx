@@ -65,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
+        console.log('Initial session:', session?.user?.email || 'No session');
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           try {
             const { data: profile } = await getUserProfile(session.user.id);
             if (mounted) {
+              console.log('User profile loaded:', profile ? 'Found' : 'Not found');
               setUserProfile(profile);
             }
           } catch (profileError) {
@@ -104,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       async (event, session) => {
         if (!mounted) return;
         
-        console.log('Auth state change:', event, session?.user?.email);
+        console.log('Auth state change:', event, session?.user?.email || 'No user');
         
         // Handle different auth events
         if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
@@ -115,6 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             try {
               const { data: profile } = await getUserProfile(session.user.id);
               if (mounted) {
+                console.log('Profile after auth change:', profile ? 'Found' : 'Not found');
                 setUserProfile(profile);
               }
             } catch (error) {
