@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, Upload, Link, AlertCircle } from 'lucide-react';
+import { X, Upload, Link, AlertCircle, File, Image, Video, FileText } from 'lucide-react';
 import { Resource } from '../../types';
 import Button from '../common/Button';
 
@@ -13,10 +13,10 @@ interface ResourceModalProps {
 }
 
 const RESOURCE_TYPES = [
-  { value: 'document', label: 'Document', description: 'PDF, Word, PowerPoint, etc.' },
-  { value: 'video', label: 'Video', description: 'YouTube, Vimeo, or direct video links' },
-  { value: 'link', label: 'Link', description: 'Websites, articles, online resources' },
-  { value: 'image', label: 'Image', description: 'Diagrams, charts, screenshots' }
+  { value: 'document', label: 'Document', description: 'PDF, Word, PowerPoint, etc.', icon: FileText },
+  { value: 'video', label: 'Video', description: 'YouTube, Vimeo, or direct video links', icon: Video },
+  { value: 'link', label: 'Link', description: 'Websites, articles, online resources', icon: Link },
+  { value: 'image', label: 'Image', description: 'Diagrams, charts, screenshots', icon: Image }
 ];
 
 export default function ResourceModal({ 
@@ -37,6 +37,9 @@ export default function ResourceModal({
   });
   const [tagInput, setTagInput] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [uploadMethod, setUploadMethod] = useState<'file' | 'url'>('file');
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
 
   useEffect(() => {
     if (resource) {
@@ -48,6 +51,7 @@ export default function ResourceModal({
         tags: resource.tags,
         groupId: resource.groupId
       });
+      setUploadMethod('url'); // Existing resources are always URL-based
     } else {
       setFormData({
         title: '',
@@ -57,9 +61,11 @@ export default function ResourceModal({
         tags: [],
         groupId: groupId
       });
+      setUploadMethod('file');
     }
     setTagInput('');
     setErrors({});
+    setSelectedFile(null);
   }, [resource, groupId, isOpen]);
 
   const validateForm = () => {
@@ -73,13 +79,19 @@ export default function ResourceModal({
       newErrors.description = 'Description is required';
     }
 
-    if (!formData.url.trim()) {
-      newErrors.url = 'URL is required';
+    if (uploadMethod === 'url') {
+      if (!formData.url.trim()) {
+        newErrors.url = 'URL is required';
+      } else {
+        try {
+          new URL(formData.url);
+        } catch {
+          newErrors.url = 'Please enter a valid URL';
+        }
+      }
     } else {
-      try {
-        new URL(formData.url);
-      } catch {
-        newErrors.url = 'Please enter a valid URL';
+      if (!selectedFile && !resource) {
+        newErrors.file = 'Please select a file to upload';
       }
     }
 
@@ -91,11 +103,23 @@ export default function ResourceModal({
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      onSubmit(formData);
+      let finalUrl = formData.url;
+      
+      // If uploading a file, simulate file upload and generate a URL
+      if (uploadMethod === 'file' && selectedFile) {
+        // In a real implementation, you would upload the file to a storage service
+        // For demo purposes, we'll create a mock URL
+        finalUrl = `https://storage.example.com/files/${selectedFile.name}`;
+      }
+      
+      onSubmit({
+        ...formData,
+        url: finalUrl
+      });
     }
   };
 
@@ -124,6 +148,55 @@ export default function ResourceModal({
     }
   };
 
+  const handleFileSelect = (file: File) => {
+    setSelectedFile(file);
+    
+    // Auto-detect resource type based on file
+    if (file.type.startsWith('image/')) {
+      setFormData(prev => ({ ...prev, type: 'image' }));
+    } else if (file.type.startsWith('video/')) {
+      setFormData(prev => ({ ...prev, type: 'video' }));
+    } else {
+      setFormData(prev => ({ ...prev, type: 'document' }));
+    }
+    
+    // Auto-fill title if empty
+    if (!formData.title) {
+      setFormData(prev => ({ 
+        ...prev, 
+        title: file.name.replace(/\.[^/.]+$/, '') // Remove file extension
+      }));
+    }
+  };
+
+  const handleDrag = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === "dragenter" || e.type === "dragover") {
+      setDragActive(true);
+    } else if (e.type === "dragleave") {
+      setDragActive(false);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      handleFileSelect(e.dataTransfer.files[0]);
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -142,6 +215,117 @@ export default function ResourceModal({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
+          {/* Upload Method Selection (only for new resources) */}
+          {!resource && (
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-3">
+                How would you like to add this resource?
+              </label>
+              <div className="grid grid-cols-2 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setUploadMethod('file')}
+                  className={`p-4 text-left rounded-lg border transition-all ${
+                    uploadMethod === 'file'
+                      ? 'bg-primary-50 border-primary-300 text-primary-700'
+                      : 'bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300'
+                  }`}
+                >
+                  <Upload className="w-5 h-5 mb-2" />
+                  <div className="font-medium">Upload File</div>
+                  <div className="text-sm text-neutral-500">Upload from your device</div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUploadMethod('url')}
+                  className={`p-4 text-left rounded-lg border transition-all ${
+                    uploadMethod === 'url'
+                      ? 'bg-primary-50 border-primary-300 text-primary-700'
+                      : 'bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300'
+                  }`}
+                >
+                  <Link className="w-5 h-5 mb-2" />
+                  <div className="font-medium">Add Link</div>
+                  <div className="text-sm text-neutral-500">Link to external resource</div>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* File Upload Area */}
+          {uploadMethod === 'file' && !resource && (
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 mb-3">
+                Select File *
+              </label>
+              <div
+                className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                  dragActive 
+                    ? 'border-primary-400 bg-primary-50' 
+                    : selectedFile 
+                    ? 'border-green-400 bg-green-50' 
+                    : 'border-neutral-300 hover:border-neutral-400'
+                }`}
+                onDragEnter={handleDrag}
+                onDragLeave={handleDrag}
+                onDragOver={handleDrag}
+                onDrop={handleDrop}
+              >
+                {selectedFile ? (
+                  <div className="space-y-3">
+                    <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+                      <File className="w-6 h-6 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-neutral-900">{selectedFile.name}</p>
+                      <p className="text-sm text-neutral-500">{formatFileSize(selectedFile.size)}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedFile(null)}
+                      className="text-sm text-red-600 hover:text-red-700"
+                    >
+                      Remove file
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <div className="w-12 h-12 bg-neutral-100 rounded-full flex items-center justify-center mx-auto">
+                      <Upload className="w-6 h-6 text-neutral-400" />
+                    </div>
+                    <div>
+                      <p className="text-neutral-600">
+                        Drag and drop your file here, or{' '}
+                        <label className="text-primary-600 hover:text-primary-700 cursor-pointer font-medium">
+                          browse
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={(e) => {
+                              if (e.target.files && e.target.files[0]) {
+                                handleFileSelect(e.target.files[0]);
+                              }
+                            }}
+                            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.jpg,.jpeg,.png,.gif,.mp4,.mov,.avi"
+                          />
+                        </label>
+                      </p>
+                      <p className="text-sm text-neutral-500 mt-1">
+                        Supports: PDF, Word, PowerPoint, Excel, Images, Videos
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+              {errors.file && (
+                <div className="flex items-center space-x-1 text-red-600 text-sm mt-1">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.file}</span>
+                </div>
+              )}
+            </div>
+          )}
+
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-neutral-700 mb-2">
               Title *
@@ -191,50 +375,61 @@ export default function ResourceModal({
               Resource Type *
             </label>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {RESOURCE_TYPES.map((type) => (
-                <button
-                  key={type.value}
-                  type="button"
-                  onClick={() => setFormData(prev => ({ ...prev, type: type.value as Resource['type'] }))}
-                  className={`p-4 text-left rounded-lg border transition-all ${
-                    formData.type === type.value
-                      ? 'bg-primary-50 border-primary-300 text-primary-700'
-                      : 'bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300'
-                  }`}
-                >
-                  <div className="font-medium">{type.label}</div>
-                  <div className="text-sm text-neutral-500 mt-1">{type.description}</div>
-                </button>
-              ))}
+              {RESOURCE_TYPES.map((type) => {
+                const Icon = type.icon;
+                return (
+                  <button
+                    key={type.value}
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, type: type.value as Resource['type'] }))}
+                    className={`p-4 text-left rounded-lg border transition-all ${
+                      formData.type === type.value
+                        ? 'bg-primary-50 border-primary-300 text-primary-700'
+                        : 'bg-white border-neutral-200 text-neutral-700 hover:border-neutral-300'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3">
+                      <Icon className="w-5 h-5" />
+                      <div>
+                        <div className="font-medium">{type.label}</div>
+                        <div className="text-sm text-neutral-500 mt-1">{type.description}</div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          <div>
-            <label htmlFor="url" className="block text-sm font-medium text-neutral-700 mb-2">
-              URL *
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Link className="h-5 w-5 text-neutral-400" />
+          {/* URL Input (only for URL method or editing existing resources) */}
+          {(uploadMethod === 'url' || resource) && (
+            <div>
+              <label htmlFor="url" className="block text-sm font-medium text-neutral-700 mb-2">
+                URL *
+              </label>
+              <div className="relative">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Link className="h-5 w-5 text-neutral-400" />
+                </div>
+                <input
+                  type="url"
+                  id="url"
+                  value={formData.url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
+                  className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
+                    errors.url ? 'border-red-300' : 'border-neutral-300'
+                  }`}
+                  placeholder="https://example.com/resource"
+                />
               </div>
-              <input
-                type="url"
-                id="url"
-                value={formData.url}
-                onChange={(e) => setFormData(prev => ({ ...prev, url: e.target.value }))}
-                className={`w-full pl-10 pr-4 py-3 border rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-colors ${
-                  errors.url ? 'border-red-300' : 'border-neutral-300'
-                }`}
-                placeholder="https://example.com/resource"
-              />
+              {errors.url && (
+                <div className="flex items-center space-x-1 text-red-600 text-sm mt-1">
+                  <AlertCircle className="w-4 h-4" />
+                  <span>{errors.url}</span>
+                </div>
+              )}
             </div>
-            {errors.url && (
-              <div className="flex items-center space-x-1 text-red-600 text-sm mt-1">
-                <AlertCircle className="w-4 h-4" />
-                <span>{errors.url}</span>
-              </div>
-            )}
-          </div>
+          )}
 
           <div>
             <label className="block text-sm font-medium text-neutral-700 mb-2">
