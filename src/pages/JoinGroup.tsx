@@ -2,55 +2,77 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Users, Calendar, Clock, Star, ChevronLeft, MessageCircle } from 'lucide-react';
 import { StudyGroup } from '../types';
+import { useStudyGroups } from '../hooks/useStudyGroups';
+import { useAuth } from '../context/AuthContext';
+import { useNotifications } from '../context/AppContext';
+import { getStudyGroupById } from '../lib/api';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
-
-const MOCK_GROUP: StudyGroup = {
-  id: '1',
-  name: 'Advanced Algorithms Study Circle',
-  subject: 'Computer Science',
-  description: 'Deep dive into complex algorithms and data structures. Perfect for preparing for technical interviews. We focus on understanding the theory behind algorithms and implementing them in various programming languages. Our sessions include problem-solving, code reviews, and mock interviews.',
-  members: [
-    { userId: '2', name: 'Alex Chen', role: 'Owner', expertise: 'Advanced', joinedAt: new Date('2024-01-15') },
-    { userId: '3', name: 'Sarah Kim', role: 'Member', expertise: 'Intermediate', joinedAt: new Date('2024-01-18') },
-    { userId: '4', name: 'Mike Johnson', role: 'Member', expertise: 'Advanced', joinedAt: new Date('2024-01-20') }
-  ],
-  maxMembers: 8,
-  schedule: [
-    { day: 'Tuesday', startTime: '19:00', endTime: '21:00' },
-    { day: 'Thursday', startTime: '19:00', endTime: '21:00' }
-  ],
-  tags: ['Algorithms', 'Data Structures', 'Interview Prep', 'Problem Solving'],
-  difficulty: 'Advanced',
-  isPrivate: false,
-  createdBy: '2',
-  createdAt: new Date('2024-01-15')
-};
 
 export default function JoinGroup() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const { addNotification } = useNotifications();
+  const { joinGroup, isUserMember } = useStudyGroups();
+  
   const [group, setGroup] = useState<StudyGroup | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isJoining, setIsJoining] = useState(false);
   const [joinMessage, setJoinMessage] = useState('');
+  const [selectedExpertise, setSelectedExpertise] = useState<'Beginner' | 'Intermediate' | 'Advanced'>('Intermediate');
 
   useEffect(() => {
-    // Simulate API call to fetch group details
-    setTimeout(() => {
-      setGroup(MOCK_GROUP);
-      setIsLoading(false);
-    }, 800);
-  }, [id]);
+    const fetchGroup = async () => {
+      if (!id) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        setIsLoading(true);
+        const { data, error } = await getStudyGroupById(id);
+        
+        if (error) {
+          console.error('Error fetching group:', error);
+          addNotification('error', 'Failed to load group details');
+          setGroup(null);
+        } else {
+          setGroup(data);
+        }
+      } catch (error) {
+        console.error('Error fetching group:', error);
+        addNotification('error', 'Failed to load group details');
+        setGroup(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchGroup();
+  }, [id, addNotification]);
 
   const handleJoinGroup = async () => {
+    if (!group || !user) {
+      addNotification('error', 'Please log in to join a group');
+      return;
+    }
+
     setIsJoining(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setIsJoining(false);
-    navigate('/my-groups');
+    try {
+      const { error } = await joinGroup(group.id, selectedExpertise);
+      
+      if (!error) {
+        addNotification('success', `Successfully joined ${group.name}!`);
+        navigate('/my-groups');
+      }
+    } catch (error) {
+      console.error('Error joining group:', error);
+      addNotification('error', 'Failed to join group');
+    } finally {
+      setIsJoining(false);
+    }
   };
 
   const getDifficultyColor = (difficulty: string) => {
@@ -60,11 +82,6 @@ export default function JoinGroup() {
       case 'Advanced': return 'bg-red-100 text-red-700';
       default: return 'bg-neutral-100 text-neutral-700';
     }
-  };
-
-  const getScheduleText = (schedule: StudyGroup['schedule']) => {
-    if (schedule.length === 0) return 'No scheduled meetings';
-    return schedule.map(slot => `${slot.day}s ${slot.startTime}-${slot.endTime}`).join(', ');
   };
 
   if (isLoading) {
@@ -99,7 +116,8 @@ export default function JoinGroup() {
     );
   }
 
-  const isGroupFull = group.members.length >= group.maxMembers;
+  const isGroupFull = group.memberCount >= group.maxMembers;
+  const userIsMember = user ? isUserMember(group.id) : false;
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-8">
@@ -140,25 +158,31 @@ export default function JoinGroup() {
                 <div>
                   <h4 className="font-medium text-neutral-900 mb-3 flex items-center">
                     <Users className="w-4 h-4 mr-2" />
-                    Members ({group.members.length}/{group.maxMembers})
+                    Members ({group.memberCount}/{group.maxMembers})
                   </h4>
                   <div className="space-y-2">
-                    {group.members.map((member) => (
-                      <div key={member.userId} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-sm font-medium text-primary-600">
-                            {member.name.charAt(0)}
+                    {group.members.length > 0 ? (
+                      group.members.map((member) => (
+                        <div key={member.userId} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-primary-100 rounded-full flex items-center justify-center text-sm font-medium text-primary-600">
+                              {member.name.charAt(0)}
+                            </div>
+                            <div>
+                              <div className="font-medium text-neutral-900">{member.name}</div>
+                              <div className="text-xs text-neutral-500">{member.expertise} • {member.role}</div>
+                            </div>
                           </div>
-                          <div>
-                            <div className="font-medium text-neutral-900">{member.name}</div>
-                            <div className="text-xs text-neutral-500">{member.expertise} • {member.role}</div>
+                          <div className="text-xs text-neutral-400">
+                            Joined {member.joinedAt.toLocaleDateString()}
                           </div>
                         </div>
-                        <div className="text-xs text-neutral-400">
-                          Joined {member.joinedAt.toLocaleDateString()}
-                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4 text-neutral-500">
+                        No members to display
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
 
@@ -168,15 +192,21 @@ export default function JoinGroup() {
                     Schedule
                   </h4>
                   <div className="space-y-2">
-                    {group.schedule.map((slot, index) => (
-                      <div key={index} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
-                        <div className="flex items-center space-x-2">
-                          <Clock className="w-4 h-4 text-neutral-500" />
-                          <span className="font-medium text-neutral-900">{slot.day}s</span>
+                    {group.schedule.length > 0 ? (
+                      group.schedule.map((slot, index) => (
+                        <div key={index} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <Clock className="w-4 h-4 text-neutral-500" />
+                            <span className="font-medium text-neutral-900">{slot.day}s</span>
+                          </div>
+                          <span className="text-neutral-600">{slot.startTime} - {slot.endTime}</span>
                         </div>
-                        <span className="text-neutral-600">{slot.startTime} - {slot.endTime}</span>
+                      ))
+                    ) : (
+                      <div className="text-center py-4 text-neutral-500">
+                        No scheduled meetings
                       </div>
-                    ))}
+                    )}
                   </div>
                 </div>
               </div>
@@ -204,9 +234,14 @@ export default function JoinGroup() {
                 <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Users className="w-8 h-8 text-primary-600" />
                 </div>
-                <h3 className="text-lg font-semibold text-neutral-900 mb-2">Join This Group</h3>
+                <h3 className="text-lg font-semibold text-neutral-900 mb-2">
+                  {userIsMember ? 'Already a Member' : 'Join This Group'}
+                </h3>
                 <p className="text-neutral-600 text-sm">
-                  Connect with {group.members.length} other students and start learning together.
+                  {userIsMember 
+                    ? 'You are already a member of this group'
+                    : `Connect with ${group.memberCount} other students and start learning together.`
+                  }
                 </p>
               </div>
 
@@ -214,7 +249,7 @@ export default function JoinGroup() {
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-neutral-600">Group Size:</span>
                   <span className="font-medium text-neutral-900">
-                    {group.members.length} of {group.maxMembers} members
+                    {group.memberCount} of {group.maxMembers} members
                   </span>
                 </div>
                 
@@ -236,34 +271,67 @@ export default function JoinGroup() {
                 </div>
               </div>
 
-              {!group.isPrivate && (
-                <div className="mb-6">
-                  <label htmlFor="joinMessage" className="block text-sm font-medium text-neutral-700 mb-2">
-                    Introduction Message (Optional)
-                  </label>
-                  <textarea
-                    id="joinMessage"
-                    value={joinMessage}
-                    onChange={(e) => setJoinMessage(e.target.value)}
-                    rows={3}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none"
-                    placeholder="Tell the group about yourself and why you'd like to join..."
-                  />
-                </div>
+              {!userIsMember && !group.isPrivate && (
+                <>
+                  <div className="mb-4">
+                    <label htmlFor="expertise" className="block text-sm font-medium text-neutral-700 mb-2">
+                      Your Expertise Level
+                    </label>
+                    <select
+                      id="expertise"
+                      value={selectedExpertise}
+                      onChange={(e) => setSelectedExpertise(e.target.value as 'Beginner' | 'Intermediate' | 'Advanced')}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                    </select>
+                  </div>
+
+                  <div className="mb-6">
+                    <label htmlFor="joinMessage" className="block text-sm font-medium text-neutral-700 mb-2">
+                      Introduction Message (Optional)
+                    </label>
+                    <textarea
+                      id="joinMessage"
+                      value={joinMessage}
+                      onChange={(e) => setJoinMessage(e.target.value)}
+                      rows={3}
+                      className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm resize-none"
+                      placeholder="Tell the group about yourself and why you'd like to join..."
+                    />
+                  </div>
+                </>
               )}
 
-              <Button
-                onClick={handleJoinGroup}
-                disabled={isGroupFull}
-                isLoading={isJoining}
-                className="w-full"
-              >
-                {isGroupFull ? 'Group Full' : 'Join Group'}
-              </Button>
+              {userIsMember ? (
+                <Button
+                  onClick={() => navigate('/my-groups')}
+                  className="w-full"
+                >
+                  Go to My Groups
+                </Button>
+              ) : (
+                <Button
+                  onClick={handleJoinGroup}
+                  disabled={isGroupFull || !user}
+                  isLoading={isJoining}
+                  className="w-full"
+                >
+                  {!user ? 'Login to Join' : isGroupFull ? 'Group Full' : 'Join Group'}
+                </Button>
+              )}
 
-              {isGroupFull && (
+              {isGroupFull && !userIsMember && (
                 <p className="text-sm text-neutral-500 text-center mt-3">
                   This group has reached its maximum capacity. You can still bookmark it or check back later.
+                </p>
+              )}
+
+              {!user && (
+                <p className="text-sm text-neutral-500 text-center mt-3">
+                  Please log in to join this group.
                 </p>
               )}
 
