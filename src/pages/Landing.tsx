@@ -6,21 +6,27 @@ import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
 export default function Landing() {
-  const { user, loading } = useAuth();
+  const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect authenticated users to homepage
+  // Only redirect authenticated users with profiles to homepage
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && userProfile) {
+      console.log('Landing: Authenticated user with profile detected, redirecting to homepage');
       navigate('/homepage');
     }
-  }, [user, loading, navigate]);
+  }, [user, userProfile, loading, navigate]);
 
-  // Show loading while checking auth state
-  if (loading) {
+  // Don't show loading for unauthenticated users - show the landing page immediately
+  // Only show loading if we have a user but are still checking for their profile
+  if (loading && user) {
+    console.log('Landing: Loading user profile...');
     return (
       <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-neutral-600">Loading...</p>
+        </div>
       </div>
     );
   }
