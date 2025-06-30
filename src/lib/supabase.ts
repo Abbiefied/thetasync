@@ -21,8 +21,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: true,
-    flowType: 'pkce'
+    detectSessionInUrl: true
   }
 });
 
@@ -74,14 +73,9 @@ export const signInWithGoogle = async () => {
 
 export const signOut = async () => {
   try {
-    console.log('Supabase signOut called');
-    const { error } = await supabase.auth.signOut({
-      scope: 'local'
-    });
+    const { error } = await supabase.auth.signOut();
     if (error) {
-      console.error('Supabase sign out error:', error);
-    } else {
-      console.log('Supabase sign out successful');
+      console.error('Sign out error:', error);
     }
     return { error };
   } catch (error) {
