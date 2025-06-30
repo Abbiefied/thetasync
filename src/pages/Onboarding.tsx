@@ -110,25 +110,28 @@ export default function Onboarding() {
 
   const totalSteps = 4;
 
-  // Redirect if not authenticated
+  // Handle authentication and profile state
   useEffect(() => {
-    if (!loading && !user) {
-      navigate('/signup');
-      return;
-    }
+    if (!loading) {
+      if (!user) {
+        // Not authenticated, redirect to signup
+        navigate('/signup', { replace: true });
+        return;
+      }
 
-    // Redirect if user already has a profile
-    if (!loading && user && userProfile) {
-      navigate('/homepage');
-      return;
-    }
+      if (userProfile) {
+        // Already has profile, redirect to homepage
+        navigate('/homepage', { replace: true });
+        return;
+      }
 
-    // Pre-fill user data from auth
-    if (user && !userProfile) {
-      setData(prev => ({
-        ...prev,
-        name: user.user_metadata?.full_name || '',
-      }));
+      // Pre-fill user data from auth
+      if (user.user_metadata?.full_name) {
+        setData(prev => ({
+          ...prev,
+          name: user.user_metadata.full_name,
+        }));
+      }
     }
   }, [user, userProfile, loading, navigate]);
 
@@ -260,7 +263,7 @@ export default function Onboarding() {
       await refreshProfile();
       
       // Navigate to homepage
-      navigate('/homepage');
+      navigate('/homepage', { replace: true });
     } catch (error) {
       console.error('Profile creation error:', error);
       setErrors({ general: 'An unexpected error occurred while creating your profile. Please try again.' });
@@ -330,9 +333,13 @@ export default function Onboarding() {
     );
   }
 
-  // Don't render if user is not authenticated (will redirect)
-  if (!user) {
-    return null;
+  // Don't render if user is not authenticated or already has profile (will redirect)
+  if (!user || userProfile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-primary-50 to-secondary-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
+      </div>
+    );
   }
 
   return (
