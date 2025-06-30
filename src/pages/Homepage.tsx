@@ -5,7 +5,6 @@ import {
   MessageCircle, ArrowRight, Star, Zap, CheckCircle,
   TrendingUp, Bell, Search
 } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -130,7 +129,6 @@ const MOCK_RECENT_ACTIVITY: RecentActivity[] = [
 ];
 
 export default function Homepage() {
-  const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
   const [taskSummary, setTaskSummary] = useState<TaskSummary | null>(null);
   const [upcomingSessions, setUpcomingSessions] = useState<UpcomingSession[]>([]);
@@ -140,13 +138,6 @@ export default function Homepage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
-      navigate('/login');
-      return;
-    }
-
     // Simulate API calls to fetch dashboard data
     setTimeout(() => {
       setTaskSummary(MOCK_TASK_SUMMARY);
@@ -156,7 +147,7 @@ export default function Homepage() {
       setRecentActivity(MOCK_RECENT_ACTIVITY);
       setIsLoading(false);
     }, 1000);
-  }, [user, loading, navigate]);
+  }, []);
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -190,7 +181,7 @@ export default function Homepage() {
     }
   };
 
-  if (loading || isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-neutral-50 pt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -212,7 +203,7 @@ export default function Homepage() {
     );
   }
 
-  const userName = userProfile?.name || user?.user_metadata?.full_name || 'Student';
+  const userName = 'Demo User';
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-8">

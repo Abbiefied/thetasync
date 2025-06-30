@@ -1,12 +1,10 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Users, Search, Bell, User, Trophy, Home, Menu, X, LogOut } from 'lucide-react';
-import { useAuth } from '../../context/AuthContext';
 
 export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, userProfile, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
@@ -15,14 +13,8 @@ export default function Header() {
   if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/onboarding') return null;
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/', { replace: true });
-    } catch (error) {
-      console.error('Sign out error:', error);
-      // Force navigation even if signOut fails
-      navigate('/', { replace: true });
-    }
+    // Redirect to landing page
+    navigate('/', { replace: true });
   };
 
   const navigationItems = [
@@ -95,7 +87,7 @@ export default function Header() {
                   <User className="w-5 h-5 text-primary-600" />
                 </div>
                 <span className="text-sm font-medium text-neutral-700">
-                  {userProfile?.name || user?.user_metadata?.full_name || 'User'}
+                  Demo User
                 </span>
               </div>
 
@@ -153,7 +145,7 @@ export default function Header() {
                     <User className="w-5 h-5 text-primary-600" />
                   </div>
                   <span className="text-sm font-medium text-neutral-700">
-                    {userProfile?.name || user?.user_metadata?.full_name || 'User'}
+                    Demo User
                   </span>
                 </div>
 
