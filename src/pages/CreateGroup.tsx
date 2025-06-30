@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Users, Calendar, Tag, Lock, Globe } from 'lucide-react';
-import { useApp } from '../context/AppContext';
+import { useStudyGroups } from '../hooks/useStudyGroups';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -36,7 +36,7 @@ interface GroupData {
 
 export default function CreateGroup() {
   const navigate = useNavigate();
-  const { dispatch } = useApp();
+  const { createGroup, isLoading } = useStudyGroups();
   const [currentStep, setCurrentStep] = useState(1);
   const [data, setData] = useState<GroupData>({
     name: '',
@@ -49,7 +49,6 @@ export default function CreateGroup() {
     isPrivate: false
   });
   const [customTag, setCustomTag] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
 
   const totalSteps = 4;
 
@@ -68,35 +67,38 @@ export default function CreateGroup() {
   };
 
   const handleSubmit = async () => {
-    setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Create new group (in real app, this would be an API call)
-    const newGroup = {
-      id: Date.now().toString(),
-      name: data.name,
-      subject: data.subject,
-      description: data.description,
-      members: [
-        { userId: '1', name: 'You', role: 'Owner' as const, expertise: 'Intermediate' as const, joinedAt: new Date() }
-      ],
-      maxMembers: data.maxMembers,
-      schedule: data.schedule.map(slot => {
+    try {
+      // Prepare schedule data
+      const schedules = data.schedule.map(slot => {
         const [day, time] = slot.split(' ');
         const [start, end] = time.split('-');
-        return { day, startTime: start, endTime: end };
-      }),
-      tags: data.tags,
-      difficulty: data.difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
-      isPrivate: data.isPrivate,
-      createdBy: '1',
-      createdAt: new Date()
-    };
+        return { 
+          day, 
+          start_time: start, 
+          end_time: end 
+        };
+      });
 
-    setIsLoading(false);
-    navigate('/my-groups');
+      // Create group data
+      const groupData = {
+        name: data.name,
+        subject: data.subject,
+        description: data.description,
+        max_members: data.maxMembers,
+        difficulty: data.difficulty as 'Beginner' | 'Intermediate' | 'Advanced',
+        is_private: data.isPrivate,
+        tags: data.tags,
+        schedules
+      };
+
+      const { data: newGroup, error } = await createGroup(groupData);
+      
+      if (!error && newGroup) {
+        navigate('/my-groups');
+      }
+    } catch (error) {
+      console.error('Error creating group:', error);
+    }
   };
 
   const handleScheduleToggle = (slot: string) => {

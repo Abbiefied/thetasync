@@ -2,68 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Users, Calendar, MessageCircle, BookOpen, Plus, Settings } from 'lucide-react';
 import { StudyGroup } from '../types';
+import { useStudyGroups } from '../hooks/useStudyGroups';
+import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
-const MOCK_USER_GROUPS: StudyGroup[] = [
-  {
-    id: '1',
-    name: 'Advanced Algorithms Study Circle',
-    subject: 'Computer Science',
-    description: 'Deep dive into complex algorithms and data structures.',
-    members: [
-      { userId: '1', name: 'You', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() },
-      { userId: '2', name: 'Alex Chen', role: 'Owner', expertise: 'Advanced', joinedAt: new Date() },
-      { userId: '3', name: 'Sarah Kim', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() }
-    ],
-    maxMembers: 8,
-    schedule: [
-      { day: 'Tuesday', startTime: '19:00', endTime: '21:00' },
-      { day: 'Thursday', startTime: '19:00', endTime: '21:00' }
-    ],
-    tags: ['Algorithms', 'Data Structures', 'Interview Prep'],
-    difficulty: 'Advanced',
-    isPrivate: false,
-    createdBy: '2',
-    createdAt: new Date('2024-01-15')
-  },
-  {
-    id: '2',
-    name: 'Machine Learning Fundamentals',
-    subject: 'Computer Science',
-    description: 'Learn the basics of machine learning algorithms.',
-    members: [
-      { userId: '1', name: 'You', role: 'Owner', expertise: 'Advanced', joinedAt: new Date() },
-      { userId: '4', name: 'Amanda Taylor', role: 'Member', expertise: 'Beginner', joinedAt: new Date() },
-      { userId: '5', name: 'Robert Johnson', role: 'Member', expertise: 'Intermediate', joinedAt: new Date() }
-    ],
-    maxMembers: 10,
-    schedule: [
-      { day: 'Friday', startTime: '16:00', endTime: '18:00' }
-    ],
-    tags: ['Machine Learning', 'AI', 'Python'],
-    difficulty: 'Beginner',
-    isPrivate: false,
-    createdBy: '1',
-    createdAt: new Date('2024-01-28')
-  }
-];
-
 export default function MyGroups() {
-  const [groups, setGroups] = useState<StudyGroup[]>([]);
+  const { user } = useAuth();
+  const { userGroups, fetchUserGroups, isLoading } = useStudyGroups();
   const [activeTab, setActiveTab] = useState('joined');
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Simulate API call
-    setTimeout(() => {
-      setGroups(MOCK_USER_GROUPS);
-      setIsLoading(false);
-    }, 800);
-  }, []);
+    if (user) {
+      fetchUserGroups();
+    }
+  }, [user]);
 
-  const joinedGroups = groups.filter(group => group.createdBy !== '1');
-  const ownedGroups = groups.filter(group => group.createdBy === '1');
+  const joinedGroups = userGroups.filter(group => group.createdBy !== user?.id);
+  const ownedGroups = userGroups.filter(group => group.createdBy === user?.id);
   
   const displayGroups = activeTab === 'joined' ? joinedGroups : ownedGroups;
 
@@ -156,7 +112,7 @@ export default function MyGroups() {
                         </p>
                       </div>
                       
-                      {group.createdBy === '1' && (
+                      {group.createdBy === user?.id && (
                         <button 
                           className="p-2 text-neutral-400 hover:text-neutral-600 transition-colors"
                           aria-label="Group settings"
@@ -210,7 +166,7 @@ export default function MyGroups() {
                     : 'Create your first study group and invite other students to join.'
                   }
                 </p>
-                <Link to="/discover">
+                <Link to={activeTab === 'joined' ? '/discover' : '/create-group'}>
                   <Button>
                     <Plus className="w-4 h-4 mr-2" />
                     {activeTab === 'joined' ? 'Browse Groups' : 'Create Group'}
@@ -222,25 +178,25 @@ export default function MyGroups() {
         </div>
 
         {/* Quick Stats */}
-        {groups.length > 0 && (
+        {userGroups.length > 0 && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
             <Card className="text-center">
               <div className="text-2xl font-bold text-primary-600 mb-1">
-                {groups.length}
+                {userGroups.length}
               </div>
               <div className="text-sm text-neutral-600">Active Groups</div>
             </Card>
             
             <Card className="text-center">
               <div className="text-2xl font-bold text-secondary-600 mb-1">
-                {groups.reduce((acc, group) => acc + group.schedule.length, 0)}
+                {userGroups.reduce((acc, group) => acc + group.schedule.length, 0)}
               </div>
               <div className="text-sm text-neutral-600">Weekly Sessions</div>
             </Card>
             
             <Card className="text-center">
               <div className="text-2xl font-bold text-accent-600 mb-1">
-                {groups.reduce((acc, group) => acc + group.members.length, 0)}
+                {userGroups.reduce((acc, group) => acc + group.members.length, 0)}
               </div>
               <div className="text-sm text-neutral-600">Study Partners</div>
             </Card>
