@@ -9,8 +9,11 @@ import { StudyGroup, Task, Resource, Quiz } from '../types';
 import { getStudyGroupById, updateStudyGroup } from '../lib/api';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/AppContext';
+import { useMessages } from '../hooks/useMessages';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
+import MessageList from '../components/messaging/MessageList';
+import MessageInput from '../components/messaging/MessageInput';
 
 const MOCK_TASKS: Task[] = [
   {
@@ -75,8 +78,6 @@ export default function GroupWorkspace() {
   const [group, setGroup] = useState<StudyGroup | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [resources, setResources] = useState<Resource[]>([]);
-  const [messages, setMessages] = useState<any[]>([]);
-  const [newMessage, setNewMessage] = useState('');
   const [isLoading, setIsLoading] = useState(true);
   const [groupOwner, setGroupOwner] = useState<string>('Unknown');
   const [isEditing, setIsEditing] = useState(false);
@@ -86,6 +87,17 @@ export default function GroupWorkspace() {
     schedule: [] as Array<{ day: string; start_time: string; end_time: string }>
   });
   const [isSaving, setIsSaving] = useState(false);
+  const [replyToMessage, setReplyToMessage] = useState<any>(null);
+
+  // Use the messaging hook
+  const { 
+    messages, 
+    isLoading: messagesLoading, 
+    isSending, 
+    sendMessage, 
+    editMessage, 
+    deleteMessage 
+  } = useMessages(id || '');
 
   // Initialize edit data only once when group is first loaded
   useEffect(() => {
@@ -133,31 +145,6 @@ export default function GroupWorkspace() {
           // Set mock data for tasks and resources (filtered by group ID)
           setTasks(MOCK_TASKS.filter(task => task.groupId === id));
           setResources(MOCK_RESOURCES.filter(resource => resource.groupId === id));
-          
-          // Set mock messages with group context
-          setMessages([
-            { 
-              id: '1', 
-              sender: owner?.name || 'Group Owner', 
-              content: `Welcome to ${data.name}! Ready for our next session?`, 
-              timestamp: new Date(), 
-              userId: data.createdBy 
-            },
-            { 
-              id: '2', 
-              sender: 'Sarah Kim', 
-              content: 'Yes! I\'ve prepared some practice problems', 
-              timestamp: new Date(), 
-              userId: '3' 
-            },
-            { 
-              id: '3', 
-              sender: user?.user_metadata?.full_name || 'You', 
-              content: 'Great! Looking forward to it', 
-              timestamp: new Date(), 
-              userId: user?.id || '1' 
-            },
-          ]);
         }
       } catch (error) {
         console.error('Error fetching group:', error);
@@ -171,18 +158,17 @@ export default function GroupWorkspace() {
     fetchGroupData();
   }, [id, user, addNotification]);
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      const message = {
-        id: Date.now().toString(),
-        sender: user?.user_metadata?.full_name || 'You',
-        content: newMessage,
-        timestamp: new Date(),
-        userId: user?.id || '1'
-      };
-      setMessages([...messages, message]);
-      setNewMessage('');
-    }
+  const handleSendMessage = async (content: string, replyTo?: string) => {
+    await sendMessage(content, replyTo);
+    setReplyToMessage(null);
+  };
+
+  const handleReplyToMessage = (message: any) => {
+    setReplyToMessage(message);
+  };
+
+  const handleCancelReply = () => {
+    setReplyToMessage(null);
   };
 
   const handleSaveEdit = async () => {
@@ -426,60 +412,29 @@ export default function GroupWorkspace() {
             </nav>
           </div>
 
-          <div className="p-6">
+          <div className="h-96 flex flex-col">
             {/* Chat Tab */}
             {activeTab === 'chat' && (
-              <div className="space-y-6">
-                <div className="h-96 bg-neutral-50 rounded-lg p-4 overflow-y-auto">
-                  <div className="space-y-4">
-                    {messages.map((message) => (
-                      <div
-                        key={message.id}
-                        className={`flex ${message.userId === user?.id ? 'justify-end' : 'justify-start'}`}
-                      >
-                        <div
-                          className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                            message.userId === user?.id
-                              ? 'bg-primary-600 text-white'
-                              : 'bg-white border border-neutral-200'
-                          }`}
-                        >
-                          {message.userId !== user?.id && (
-                            <div className="text-xs font-medium text-neutral-500 mb-1">
-                              {message.sender}
-                            </div>
-                          )}
-                          <div className="text-sm">{message.content}</div>
-                          <div className={`text-xs mt-1 ${
-                            message.userId === user?.id ? 'text-primary-100' : 'text-neutral-400'
-                          }`}>
-                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                
-                <div className="flex space-x-3">
-                  <input
-                    type="text"
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                    placeholder="Type your message..."
-                    className="flex-1 px-4 py-2 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                  />
-                  <Button onClick={handleSendMessage} disabled={!newMessage.trim()}>
-                    <Send className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
+              <>
+                <MessageList
+                  messages={messages}
+                  isLoading={messagesLoading}
+                  onEditMessage={editMessage}
+                  onDeleteMessage={deleteMessage}
+                  onReplyToMessage={handleReplyToMessage}
+                />
+                <MessageInput
+                  onSendMessage={handleSendMessage}
+                  isSending={isSending}
+                  replyToMessage={replyToMessage}
+                  onCancelReply={handleCancelReply}
+                />
+              </>
             )}
 
             {/* Tasks Tab */}
             {activeTab === 'tasks' && (
-              <div className="space-y-6">
+              <div className="p-6 space-y-6 overflow-y-auto">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-neutral-900">Group Tasks</h3>
                   <Button size="sm">
@@ -575,7 +530,7 @@ export default function GroupWorkspace() {
 
             {/* Resources Tab */}
             {activeTab === 'resources' && (
-              <div className="space-y-6">
+              <div className="p-6 space-y-6 overflow-y-auto">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-neutral-900">Shared Resources</h3>
                   <Button size="sm">
@@ -624,7 +579,7 @@ export default function GroupWorkspace() {
 
             {/* Quizzes Tab */}
             {activeTab === 'quizzes' && (
-              <div className="space-y-6">
+              <div className="p-6 space-y-6 overflow-y-auto">
                 <div className="flex justify-between items-center">
                   <h3 className="text-lg font-semibold text-neutral-900">Study Quizzes</h3>
                   <Button size="sm">
@@ -649,7 +604,7 @@ export default function GroupWorkspace() {
 
             {/* Progress Tab */}
             {activeTab === 'progress' && (
-              <div className="space-y-6">
+              <div className="p-6 space-y-6 overflow-y-auto">
                 <h3 className="text-lg font-semibold text-neutral-900">Group Progress</h3>
                 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -669,9 +624,9 @@ export default function GroupWorkspace() {
                   
                   <Card className="text-center">
                     <div className="text-2xl font-bold text-accent-600 mb-1">
-                      {(group.schedule?.length || 0) * 4}
+                      {messages.length}
                     </div>
-                    <div className="text-sm text-neutral-600">Study Hours/Month</div>
+                    <div className="text-sm text-neutral-600">Messages Sent</div>
                   </Card>
                 </div>
 
