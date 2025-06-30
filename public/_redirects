@@ -1,5 +1,15 @@
 # Netlify redirects for single-page application
 # This ensures all routes are handled by the React app
 
-# Handle all routes by serving index.html
+# Handle all routes by serving index.html with 200 status
 /*    /index.html   200
+
+# Specific routes that should be handled by React Router
+/onboarding    /index.html   200
+/homepage      /index.html   200
+/discover      /index.html   200
+/my-groups     /index.html   200
+/create-group  /index.html   200
+/resources     /index.html   200
+/leaderboard   /index.html   200
+/group/*       /index.html   200
