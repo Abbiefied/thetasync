@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Trophy, Medal, Award, Users, Target, TrendingUp, Crown, Star, Zap, ArrowLeft } from 'lucide-react';
+import { Trophy, Medal, Award, Users, Target, TrendingUp, Crown, Star, Zap } from 'lucide-react';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -232,7 +231,6 @@ const MOCK_GROUP_LEADERBOARD: LeaderboardGroup[] = [
 ];
 
 export default function Leaderboard() {
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'individual' | 'group'>('individual');
   const [timeframe, setTimeframe] = useState<'week' | 'month' | 'all'>('month');
   const [individualData, setIndividualData] = useState<LeaderboardUser[]>([]);
@@ -329,14 +327,6 @@ export default function Leaderboard() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-neutral-600 hover:text-neutral-900 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
-          </button>
-          
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-12 h-12 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center">
               <Trophy className="w-6 h-6 text-white" />

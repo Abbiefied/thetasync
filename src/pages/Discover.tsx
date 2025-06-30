@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, Filter, Users, Clock, Star, Plus, ArrowLeft } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, Filter, Users, Clock, Star, Plus } from 'lucide-react';
 import { StudyGroup } from '../types';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -93,7 +93,6 @@ const MOCK_GROUPS: StudyGroup[] = [
 ];
 
 export default function Discover() {
-  const navigate = useNavigate();
   const [groups, setGroups] = useState<StudyGroup[]>([]);
   const [filteredGroups, setFilteredGroups] = useState<StudyGroup[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -186,13 +185,6 @@ export default function Discover() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-neutral-600 hover:text-neutral-900 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
-          </button>
           <h1 className="text-3xl font-bold text-neutral-900 mb-2">Discover Study Groups</h1>
           <p className="text-neutral-600">Find the perfect study group that matches your interests and schedule.</p>
         </div>

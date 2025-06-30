@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { 
   MessageCircle, Users, BookOpen, CheckSquare, Video, 
   Plus, Send, Paperclip, MoreVertical, Clock, Trophy,
-  Search, Filter, Star, Calendar, Target, ArrowLeft
+  Search, Filter, Star, Calendar, Target
 } from 'lucide-react';
 import { StudyGroup, Task, Resource, Quiz } from '../types';
 import Button from '../components/common/Button';
@@ -94,7 +94,6 @@ type TabType = 'chat' | 'tasks' | 'resources' | 'quizzes' | 'progress';
 
 export default function GroupWorkspace() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<TabType>('chat');
   const [group, setGroup] = useState<StudyGroup | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -164,9 +163,9 @@ export default function GroupWorkspace() {
       <div className="min-h-screen bg-neutral-50 pt-24 flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold text-neutral-900 mb-4">Group not found</h2>
-          <Button onClick={() => navigate(-1)}>
-            Back
-          </Button>
+          <Link to="/my-groups">
+            <Button>Back to My Groups</Button>
+          </Link>
         </div>
       </div>
     );
@@ -175,16 +174,8 @@ export default function GroupWorkspace() {
   return (
     <div className="min-h-screen bg-neutral-50 pt-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+        {/* Group Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-neutral-600 hover:text-neutral-900 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
-          </button>
-          
           <div className="flex items-start justify-between mb-4">
             <div className="flex-1">
               <h1 className="text-3xl font-bold text-neutral-900 mb-2">{group.name}</h1>

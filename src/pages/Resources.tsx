@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Search, Filter, BookOpen, Video, Link, Image, Download, Star, Plus, ArrowLeft } from 'lucide-react';
+import { Search, Filter, BookOpen, Video, Link, Image, Download, Star, Plus } from 'lucide-react';
 import { Resource } from '../types';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -75,7 +74,6 @@ const MOCK_RESOURCES: Resource[] = [
 ];
 
 export default function Resources() {
-  const navigate = useNavigate();
   const [resources, setResources] = useState<Resource[]>([]);
   const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -172,13 +170,6 @@ export default function Resources() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center text-neutral-600 hover:text-neutral-900 mb-4 transition-colors"
-          >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
-          </button>
           <h1 className="text-3xl font-bold text-neutral-900 mb-2">Resource Library</h1>
           <p className="text-neutral-600">Discover and share study materials, notes, and learning resources.</p>
         </div>

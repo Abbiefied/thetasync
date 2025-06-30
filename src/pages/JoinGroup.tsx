@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Users, Calendar, Clock, Star, ArrowLeft, MessageCircle } from 'lucide-react';
+import { Users, Calendar, Clock, Star, ChevronLeft, MessageCircle } from 'lucide-react';
 import { StudyGroup } from '../types';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -91,8 +91,8 @@ export default function JoinGroup() {
         <div className="text-center">
           <h2 className="text-2xl font-bold text-neutral-900 mb-4">Group not found</h2>
           <p className="text-neutral-600 mb-6">The study group you're looking for doesn't exist or has been removed.</p>
-          <Button onClick={() => navigate(-1)}>
-            Back
+          <Button onClick={() => navigate('/discover')}>
+            Back to Discover
           </Button>
         </div>
       </div>
@@ -107,11 +107,11 @@ export default function JoinGroup() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/discover')}
             className="flex items-center text-neutral-600 hover:text-neutral-900 mb-4 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Back to Discover
           </button>
         </div>
 

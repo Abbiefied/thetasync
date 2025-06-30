@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Users, Calendar, Tag, Lock, Globe, ArrowLeft } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Users, Calendar, Tag, Lock, Globe } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
@@ -146,11 +146,11 @@ export default function CreateGroup() {
         {/* Header */}
         <div className="mb-8">
           <button
-            onClick={() => navigate(-1)}
+            onClick={() => navigate('/discover')}
             className="flex items-center text-neutral-600 hover:text-neutral-900 mb-4 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 mr-1" />
-            Back
+            <ChevronLeft className="w-4 h-4 mr-1" />
+            Back to Discover
           </button>
           <h1 className="text-3xl font-bold text-neutral-900 mb-2">Create Study Group</h1>
           <p className="text-neutral-600">Set up your study group and start collaborating with other students.</p>

@@ -15,14 +15,8 @@ export default function Header() {
   if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/onboarding') return null;
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      navigate('/', { replace: true });
-    } catch (error) {
-      console.error('Sign out error:', error);
-      // Force navigation even if signOut fails
-      navigate('/', { replace: true });
-    }
+    await signOut();
+    navigate('/');
   };
 
   const navigationItems = [
@@ -103,7 +97,6 @@ export default function Header() {
                 onClick={handleSignOut}
                 className="p-2 rounded-full text-neutral-500 hover:text-red-600 hover:bg-red-50 transition-colors"
                 aria-label="Sign out"
-                title="Sign out"
               >
                 <LogOut className="w-5 h-5" />
               </button>
@@ -177,7 +170,6 @@ export default function Header() {
                     onClick={handleSignOut}
                     className="p-2 rounded-full text-neutral-500 hover:text-red-600 hover:bg-red-50 transition-colors"
                     aria-label="Sign out"
-                    title="Sign out"
                   >
                     <LogOut className="w-5 h-5" />
                   </button>
