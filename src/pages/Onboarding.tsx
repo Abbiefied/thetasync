@@ -112,7 +112,12 @@ export default function Onboarding() {
 
   // Handle redirects and initial data
   useEffect(() => {
-    if (loading) return;
+    console.log('Onboarding useEffect:', { loading, user: !!user, userProfile: !!userProfile });
+    
+    if (loading) {
+      console.log('Still loading auth state...');
+      return;
+    }
 
     if (!user) {
       console.log('No user found, redirecting to signup');
@@ -129,6 +134,7 @@ export default function Onboarding() {
 
     // Pre-fill user data from auth
     if (user && !userProfile) {
+      console.log('Setting up onboarding for user:', user.email);
       setData(prev => ({
         ...prev,
         name: user.user_metadata?.full_name || '',
@@ -232,6 +238,8 @@ export default function Onboarding() {
     setIsLoading(true);
     
     try {
+      console.log('Creating profile for user:', user.email);
+      
       // Prepare profile data
       const profileData = {
         name: data.name,
@@ -263,10 +271,15 @@ export default function Onboarding() {
 
       console.log('Profile created successfully, refreshing profile...');
       // Refresh the profile in context
-      await refreshProfile();
+      const newProfile = await refreshProfile();
       
-      // Navigate to homepage
-      navigate('/homepage');
+      if (newProfile) {
+        console.log('Profile refresh successful, navigating to homepage');
+        navigate('/homepage');
+      } else {
+        console.error('Profile refresh failed');
+        setErrors({ general: 'Profile created but failed to load. Please refresh the page.' });
+      }
     } catch (error) {
       console.error('Profile creation error:', error);
       setErrors({ general: 'An unexpected error occurred while creating your profile. Please try again.' });

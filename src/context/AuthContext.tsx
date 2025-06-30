@@ -23,82 +23,104 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refreshProfile = async () => {
     if (user) {
       try {
+        console.log('Refreshing profile for user:', user.id);
         const { data: profile } = await getUserProfile(user.id);
         setUserProfile(profile);
+        console.log('Profile refreshed:', profile ? 'Found' : 'Not found');
+        return profile;
       } catch (error) {
         console.error('Error refreshing profile:', error);
         setUserProfile(null);
+        return null;
       }
     }
+    return null;
   };
 
   const handleSignOut = async () => {
     try {
+      console.log('Signing out...');
+      setLoading(true);
+      
+      // Clear state first
+      setUser(null);
+      setUserProfile(null);
+      setSession(null);
+      
+      // Then call Supabase signOut
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Sign out error:', error);
+      } else {
+        console.log('Sign out successful');
       }
     } catch (error) {
       console.error('Sign out error:', error);
     } finally {
-      // Always clear the state regardless of errors
-      setUser(null);
-      setUserProfile(null);
-      setSession(null);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     let mounted = true;
+    let initialLoadComplete = false;
+
+    const loadUserData = async (currentUser: User) => {
+      try {
+        console.log('Loading profile for user:', currentUser.email);
+        const { data: profile, error } = await getUserProfile(currentUser.id);
+        
+        if (error) {
+          console.error('Error loading profile:', error);
+        }
+        
+        if (mounted) {
+          setUserProfile(profile);
+          console.log('Profile loaded:', profile ? `Found profile for ${profile.name}` : 'No profile found');
+        }
+      } catch (error) {
+        console.error('Error in loadUserData:', error);
+        if (mounted) {
+          setUserProfile(null);
+        }
+      }
+    };
 
     // Get initial session
-    const getInitialSession = async () => {
+    const initializeAuth = async () => {
       try {
+        console.log('Initializing auth...');
         const { data: { session }, error } = await supabase.auth.getSession();
         
         if (!mounted) return;
         
         if (error) {
-          console.error('Error getting session:', error);
-          setLoading(false);
-          return;
+          console.error('Error getting initial session:', error);
+        } else {
+          console.log('Initial session:', session?.user?.email || 'No session');
         }
 
-        console.log('Initial session check:', session?.user?.email || 'No session found');
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          try {
-            const { data: profile } = await getUserProfile(session.user.id);
-            if (mounted) {
-              setUserProfile(profile);
-              console.log('Profile loaded:', profile ? 'Profile exists' : 'No profile found');
-            }
-          } catch (profileError) {
-            console.error('Error loading profile:', profileError);
-            if (mounted) {
-              setUserProfile(null);
-            }
-          }
+          await loadUserData(session.user);
         } else {
-          if (mounted) {
-            setUserProfile(null);
-          }
+          setUserProfile(null);
         }
         
-        if (mounted) {
-          setLoading(false);
-        }
+        initialLoadComplete = true;
+        setLoading(false);
+        console.log('Auth initialization complete');
       } catch (error) {
-        console.error('Error in getInitialSession:', error);
+        console.error('Error in initializeAuth:', error);
         if (mounted) {
           setLoading(false);
         }
       }
     };
 
-    getInitialSession();
+    initializeAuth();
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
@@ -107,30 +129,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         
         console.log('Auth state change:', event, session?.user?.email || 'No session');
         
+        // Only process auth changes after initial load is complete
+        if (!initialLoadComplete && event !== 'INITIAL_SESSION') {
+          console.log('Skipping auth change - initial load not complete');
+          return;
+        }
+        
         setSession(session);
         setUser(session?.user ?? null);
         
         if (event === 'SIGNED_IN' && session?.user) {
-          try {
-            const { data: profile } = await getUserProfile(session.user.id);
-            if (mounted) {
-              setUserProfile(profile);
-              console.log('Profile loaded after sign in:', profile ? 'Profile exists' : 'No profile found');
-            }
-          } catch (error) {
-            console.error('Error loading profile after sign in:', error);
-            if (mounted) {
-              setUserProfile(null);
-            }
-          }
+          console.log('User signed in, loading profile...');
+          await loadUserData(session.user);
         } else if (event === 'SIGNED_OUT') {
-          if (mounted) {
-            setUserProfile(null);
+          console.log('User signed out, clearing profile');
+          setUserProfile(null);
+        } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          console.log('Token refreshed');
+          // Don't reload profile on token refresh unless we don't have one
+          if (!userProfile) {
+            await loadUserData(session.user);
           }
         }
         
-        // Don't set loading to false here for auth state changes
-        // as it can cause race conditions
+        // Ensure loading is false after processing auth changes
+        if (initialLoadComplete) {
+          setLoading(false);
+        }
       }
     );
 
@@ -148,6 +173,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signOut: handleSignOut,
     refreshProfile
   };
+
+  console.log('Auth Context State:', {
+    hasUser: !!user,
+    hasProfile: !!userProfile,
+    loading,
+    userEmail: user?.email
+  });
 
   return (
     <AuthContext.Provider value={value}>

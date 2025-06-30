@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { 
   Calendar, Clock, Trophy, Target, Users, BookOpen, 
   MessageCircle, ArrowRight, Star, Zap, CheckCircle,
@@ -139,17 +139,22 @@ export default function Homepage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    console.log('Homepage: Loading dashboard data...');
+    
     // Simulate API calls to fetch dashboard data
     const loadDashboardData = async () => {
       try {
         // Simulate loading delay
         await new Promise(resolve => setTimeout(resolve, 1000));
         
+        console.log('Homepage: Setting mock data...');
         setTaskSummary(MOCK_TASK_SUMMARY);
         setUpcomingSessions(MOCK_UPCOMING_SESSIONS);
         setNextQuiz(MOCK_NEXT_QUIZ);
         setLeaderboardRank(MOCK_LEADERBOARD_RANK);
         setRecentActivity(MOCK_RECENT_ACTIVITY);
+        
+        console.log('Homepage: Dashboard data loaded successfully');
       } catch (error) {
         console.error('Error loading dashboard data:', error);
       } finally {
@@ -193,6 +198,7 @@ export default function Homepage() {
   };
 
   if (isLoading) {
+    console.log('Homepage: Rendering loading state');
     return (
       <div className="min-h-screen bg-neutral-50 pt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -215,6 +221,7 @@ export default function Homepage() {
   }
 
   const userName = userProfile?.name || user?.user_metadata?.full_name || 'Student';
+  console.log('Homepage: Rendering content for user:', userName);
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-8">
