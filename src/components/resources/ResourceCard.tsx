@@ -8,10 +8,10 @@ interface ResourceCardProps {
   isOwner: boolean;
   onEdit: (resource: Resource) => void;
   onDelete: (resourceId: string) => void;
-  onView: (resource: Resource) => void;
+  onDownload: (resource: Resource) => void;
 }
 
-export default function ResourceCard({ resource, isOwner, onEdit, onDelete, onView }: ResourceCardProps) {
+export default function ResourceCard({ resource, isOwner, onEdit, onDelete, onDownload }: ResourceCardProps) {
   const [showMenu, setShowMenu] = useState(false);
 
   const getTypeIcon = (type: Resource['type']) => {
@@ -33,6 +33,27 @@ export default function ResourceCard({ resource, isOwner, onEdit, onDelete, onVi
   };
 
   const TypeIcon = getTypeIcon(resource.type);
+
+  const formatDate = (date: string | Date) => {
+    try {
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      if (isNaN(dateObj.getTime())) {
+        return 'Unknown date';
+      }
+      return dateObj.toLocaleDateString();
+    } catch (error) {
+      return 'Unknown date';
+    }
+  };
+
+  const getUploaderName = (uploadedBy: string) => {
+    // Handle both user ID and name formats
+    if (uploadedBy && uploadedBy.length > 20) {
+      // Likely a UUID, show as "Unknown User"
+      return 'Unknown User';
+    }
+    return uploadedBy || 'Unknown User';
+  };
 
   return (
     <div className="bg-white rounded-xl border border-neutral-200 p-6 hover:shadow-md transition-all duration-200 relative">
@@ -108,8 +129,8 @@ export default function ResourceCard({ resource, isOwner, onEdit, onDelete, onVi
 
       <div className="border-t border-neutral-200 pt-4 mt-4">
         <div className="flex items-center justify-between text-sm text-neutral-500 mb-3">
-          <span>By {resource.uploaded_by}</span>
-          <span>{new Date(resource.uploaded_at).toLocaleDateString()}</span>
+          <span>By {getUploaderName(resource.uploaded_by)}</span>
+          <span>{formatDate(resource.uploaded_at)}</span>
         </div>
         
         <div className="flex space-x-2">
@@ -117,10 +138,10 @@ export default function ResourceCard({ resource, isOwner, onEdit, onDelete, onVi
             variant="outline" 
             size="sm" 
             className="flex-1"
-            onClick={() => onView(resource)}
+            onClick={() => onDownload(resource)}
           >
             <Download className="w-4 h-4 mr-2" />
-            View
+            Download
           </Button>
           <Button variant="ghost" size="sm">
             <Star className="w-4 h-4" />

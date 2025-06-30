@@ -1,20 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Search, Filter, Plus, ChevronLeft } from 'lucide-react';
+import { Search, Filter, Plus, ChevronLeft, ExternalLink } from 'lucide-react';
 import { Resource } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { useResources } from '../hooks/useResources';
 import { getStudyGroupById } from '../lib/api';
+import { useNotifications } from '../context/AppContext';
 import Button from '../components/common/Button';
 import ResourceCard from '../components/resources/ResourceCard';
 import ResourceModal from '../components/resources/ResourceModal';
-import ResourceViewer from '../components/resources/ResourceViewer';
 
 export default function GroupResources() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { resources, isLoading, fetchGroupResources, createResource, deleteResource } = useResources();
+  const { addNotification } = useNotifications();
+  const { resources, isLoading, fetchGroupResources, createResource, updateResource, deleteResource } = useResources();
   
   const [groupName, setGroupName] = useState('');
   const [filteredResources, setFilteredResources] = useState<Resource[]>([]);
@@ -23,7 +24,6 @@ export default function GroupResources() {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [editingResource, setEditingResource] = useState<Resource | null>(null);
-  const [viewingResource, setViewingResource] = useState<Resource | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -71,14 +71,33 @@ export default function GroupResources() {
     
     setIsSubmitting(true);
     try {
-      const { error } = await createResource(resourceData);
-      
-      if (!error) {
-        setShowUploadModal(false);
-        setEditingResource(null);
+      if (editingResource) {
+        // Update existing resource
+        const { error } = await updateResource(editingResource.id, {
+          title: resourceData.title,
+          description: resourceData.description,
+          type: resourceData.type,
+          url: resourceData.url,
+          tags: resourceData.tags
+        });
+        
+        if (!error) {
+          setShowUploadModal(false);
+          setEditingResource(null);
+          addNotification('success', 'Resource updated successfully!');
+        }
+      } else {
+        // Create new resource
+        const { error } = await createResource(resourceData);
+        
+        if (!error) {
+          setShowUploadModal(false);
+          addNotification('success', 'Resource uploaded successfully!');
+        }
       }
     } catch (error) {
-      console.error('Error uploading resource:', error);
+      console.error('Error with resource:', error);
+      addNotification('error', 'Failed to save resource');
     } finally {
       setIsSubmitting(false);
     }
@@ -88,6 +107,34 @@ export default function GroupResources() {
     if (window.confirm('Are you sure you want to delete this resource?')) {
       await deleteResource(resourceId);
     }
+  };
+
+  const handleDownloadResource = (resource: Resource) => {
+    try {
+      // For external URLs, open in new tab
+      if (resource.url.startsWith('http://') || resource.url.startsWith('https://')) {
+        window.open(resource.url, '_blank', 'noopener,noreferrer');
+      } else {
+        // For relative URLs or file paths, create a download link
+        const link = document.createElement('a');
+        link.href = resource.url;
+        link.download = resource.title;
+        link.target = '_blank';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      
+      addNotification('success', 'Opening resource...');
+    } catch (error) {
+      console.error('Error downloading resource:', error);
+      addNotification('error', 'Failed to open resource');
+    }
+  };
+
+  const handleEditResource = (resource: Resource) => {
+    setEditingResource(resource);
+    setShowUploadModal(true);
   };
 
   const toggleTag = (tag: string) => {
@@ -221,9 +268,9 @@ export default function GroupResources() {
                 key={resource.id}
                 resource={resource}
                 isOwner={isResourceOwner(resource)}
-                onEdit={setEditingResource}
+                onEdit={handleEditResource}
                 onDelete={handleDeleteResource}
-                onView={setViewingResource}
+                onDownload={handleDownloadResource}
               />
             ))}
           </div>
@@ -248,7 +295,7 @@ export default function GroupResources() {
 
         {/* Upload/Edit Modal */}
         <ResourceModal
-          isOpen={showUploadModal || !!editingResource}
+          isOpen={showUploadModal}
           onClose={() => {
             setShowUploadModal(false);
             setEditingResource(null);
@@ -258,15 +305,6 @@ export default function GroupResources() {
           isLoading={isSubmitting}
           groupId={id || ''}
         />
-
-        {/* Resource Viewer */}
-        {viewingResource && (
-          <ResourceViewer
-            resource={viewingResource}
-            isOpen={!!viewingResource}
-            onClose={() => setViewingResource(null)}
-          />
-        )}
       </div>
     </div>
   );
