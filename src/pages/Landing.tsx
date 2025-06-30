@@ -13,7 +13,7 @@ export default function Landing() {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center space-x-2 text-primary-600 font-bold text-xl">
               <Users className="w-8 h-8" />
-              <span>StudyCircle</span>
+              <span>ThetaSync</span>
             </div>
             <nav className="hidden md:flex space-x-8">
               <a href="#features" className="text-neutral-600 hover:text-primary-600 font-medium transition-colors">Features</a>
@@ -169,7 +169,7 @@ export default function Landing() {
               Get Started in 3 Simple Steps
             </h2>
             <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-              Join StudyCircle and start your collaborative learning journey today.
+              Join ThetaSync and start your collaborative learning journey today.
             </p>
           </div>
 
@@ -215,7 +215,7 @@ export default function Landing() {
               What Students Are Saying
             </h2>
             <p className="text-xl text-neutral-600 max-w-2xl mx-auto">
-              Join thousands of students who have improved their academic performance with StudyCircle.
+              Join thousands of students who have improved their academic performance with ThetaSync.
             </p>
           </div>
 
@@ -227,7 +227,7 @@ export default function Landing() {
                 ))}
               </div>
               <p className="text-neutral-600 mb-6 italic">
-                "StudyCircle helped me find the perfect study group for my computer science courses. My grades improved by 15% in just one semester!"
+                "ThetaSync helped me find the perfect study group for my computer science courses. My grades improved by 15% in just one semester!"
               </p>
               <div className="text-sm">
                 <div className="font-semibold text-neutral-900">Alex Chen</div>
@@ -257,7 +257,7 @@ export default function Landing() {
                 ))}
               </div>
               <p className="text-neutral-600 mb-6 italic">
-                "I was struggling with organic chemistry until I joined a StudyCircle group. The peer support and shared knowledge made all the difference."
+                "I was struggling with organic chemistry until I joined a ThetaSync group. The peer support and shared knowledge made all the difference."
               </p>
               <div className="text-sm">
                 <div className="font-semibold text-neutral-900">David Kim</div>

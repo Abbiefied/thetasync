@@ -99,6 +99,7 @@ export default function SignUp() {
 
     if (Object.keys(formErrors).length === 0) {
       setIsLoading(true);
+      setErrors({}); // Clear any previous errors
       
       try {
         const { data: authData, error } = await signUp(data.email, data.password, {
@@ -115,8 +116,11 @@ export default function SignUp() {
         } else {
           setUserEmail(data.email);
           setShowConfirmation(true);
+          // Clear form data
+          setData({ email: '', password: '', confirmPassword: '' });
         }
       } catch (error) {
+        console.error('Sign up error:', error);
         setErrors({ general: 'An unexpected error occurred. Please try again.' });
       } finally {
         setIsLoading(false);
@@ -126,6 +130,7 @@ export default function SignUp() {
 
   const handleGoogleSignUp = async () => {
     setIsGoogleLoading(true);
+    setErrors({}); // Clear any previous errors
     
     try {
       const { error } = await signInWithGoogle();
@@ -136,6 +141,7 @@ export default function SignUp() {
       }
       // If successful, the auth state change will handle navigation
     } catch (error) {
+      console.error('Google sign-up error:', error);
       setErrors({ general: 'Google sign-up failed. Please try again.' });
       setIsGoogleLoading(false);
     }
@@ -238,7 +244,7 @@ export default function SignUp() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-2 text-primary-600 font-bold text-2xl mb-4">
               <Users className="w-8 h-8" />
-              <span>StudyCircle</span>
+              <span>ThetaSync</span>
             </div>
             <h1 className="text-2xl font-bold text-neutral-900 mb-2">Create Your Account</h1>
             <p className="text-neutral-600">Join thousands of students learning together</p>
@@ -313,6 +319,7 @@ export default function SignUp() {
                   placeholder="Enter your email"
                   autoComplete="email"
                   autoFocus
+                  disabled={isLoading || isGoogleLoading}
                 />
               </div>
               <ErrorMessage error={errors.email} />
@@ -336,11 +343,13 @@ export default function SignUp() {
                   }`}
                   placeholder="Create a strong password"
                   autoComplete="new-password"
+                  disabled={isLoading || isGoogleLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600"
+                  disabled={isLoading || isGoogleLoading}
                 >
                   {showPassword ? (
                     <EyeOff className="h-5 w-5" />
@@ -423,11 +432,13 @@ export default function SignUp() {
                   }`}
                   placeholder="Confirm your password"
                   autoComplete="new-password"
+                  disabled={isLoading || isGoogleLoading}
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute inset-y-0 right-0 pr-3 flex items-center text-neutral-400 hover:text-neutral-600"
+                  disabled={isLoading || isGoogleLoading}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-5 w-5" />

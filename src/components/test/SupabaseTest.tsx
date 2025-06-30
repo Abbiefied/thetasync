@@ -63,7 +63,7 @@ export default function SupabaseTest() {
         updateTest(1, 'error', 'Database connection failed', error.message);
       } else {
         updateTest(1, 'success', 'Database connection successful', 
-          `Connected to Supabase database`);
+          `Connected to ThetaSync database`);
       }
     } catch (error) {
       updateTest(1, 'error', 'Database connection error', String(error));
@@ -144,7 +144,7 @@ export default function SupabaseTest() {
     <div className="min-h-screen bg-neutral-50 pt-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Supabase Connection Test</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 mb-2">ThetaSync Connection Test</h1>
           <p className="text-neutral-600">
             Testing the connection to Supabase and verifying all services are working correctly.
           </p>
@@ -218,7 +218,7 @@ export default function SupabaseTest() {
               
               {allTestsPassed && (
                 <p className="text-sm text-green-700 mt-2">
-                  Your Supabase connection is working correctly. All services are accessible and functioning properly.
+                  Your ThetaSync connection is working correctly. All services are accessible and functioning properly.
                 </p>
               )}
               
