@@ -24,7 +24,7 @@ export default function MyGroups() {
   const displayGroups = activeTab === 'joined' ? joinedGroups : ownedGroups;
 
   const getNextSession = (schedule: StudyGroup['schedule']) => {
-    if (schedule.length === 0) return 'No upcoming sessions';
+    if (!schedule || schedule.length === 0) return 'No upcoming sessions';
     // Simplified - just return the first scheduled session
     const session = schedule[0];
     return `Next ${session.day} at ${session.startTime}`;
@@ -125,7 +125,7 @@ export default function MyGroups() {
                     <div className="space-y-3 mb-6">
                       <div className="flex items-center text-sm text-neutral-500">
                         <Users className="w-4 h-4 mr-2" />
-                        {group.members.length} members
+                        {group.members?.length || 0} members
                       </div>
                       
                       <div className="flex items-center text-sm text-neutral-500">
@@ -189,14 +189,14 @@ export default function MyGroups() {
             
             <Card className="text-center">
               <div className="text-2xl font-bold text-secondary-600 mb-1">
-                {userGroups.reduce((acc, group) => acc + group.schedule.length, 0)}
+                {userGroups.reduce((acc, group) => acc + (group.schedule?.length || 0), 0)}
               </div>
               <div className="text-sm text-neutral-600">Weekly Sessions</div>
             </Card>
             
             <Card className="text-center">
               <div className="text-2xl font-bold text-accent-600 mb-1">
-                {userGroups.reduce((acc, group) => acc + group.members.length, 0)}
+                {userGroups.reduce((acc, group) => acc + (group.members?.length || 0), 0)}
               </div>
               <div className="text-sm text-neutral-600">Study Partners</div>
             </Card>
