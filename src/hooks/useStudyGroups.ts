@@ -14,6 +14,7 @@ export function useStudyGroups() {
   const fetchPublicGroups = async () => {
     setIsLoading(true);
     try {
+      console.log('Fetching public groups...');
       const { data, error } = await api.getPublicStudyGroups();
       if (error) {
         console.error('Error fetching public groups:', error);
@@ -21,6 +22,7 @@ export function useStudyGroups() {
         return;
       }
       
+      console.log('Public groups fetched:', data?.length || 0, 'groups');
       dispatch({ type: 'SET_STUDY_GROUPS', payload: data || [] });
     } catch (error) {
       console.error('Error fetching public groups:', error);
@@ -32,10 +34,14 @@ export function useStudyGroups() {
 
   // Fetch user's study groups
   const fetchUserGroups = async () => {
-    if (!user) return;
+    if (!user) {
+      console.log('No user found, skipping user groups fetch');
+      return;
+    }
     
     setIsLoading(true);
     try {
+      console.log('Fetching user groups for:', user.email);
       const { data, error } = await api.getUserStudyGroups(user.id);
       if (error) {
         console.error('Error fetching user groups:', error);
@@ -43,6 +49,7 @@ export function useStudyGroups() {
         return;
       }
       
+      console.log('User groups fetched:', data?.length || 0, 'groups');
       dispatch({ type: 'SET_USER_GROUPS', payload: data || [] });
     } catch (error) {
       console.error('Error fetching user groups:', error);
@@ -65,6 +72,7 @@ export function useStudyGroups() {
   }) => {
     setIsLoading(true);
     try {
+      console.log('Creating group:', groupData.name);
       const { data, error } = await api.createStudyGroup(groupData);
       if (error) {
         console.error('Error creating group:', error);
@@ -72,8 +80,13 @@ export function useStudyGroups() {
         return { data: null, error };
       }
       
+      console.log('Group created successfully:', data?.id);
       dispatch({ type: 'ADD_STUDY_GROUP', payload: data });
       addNotification('success', 'Study group created successfully!');
+      
+      // Refresh user groups to include the new group
+      await fetchUserGroups();
+      
       return { data, error: null };
     } catch (error) {
       console.error('Error creating group:', error);
@@ -88,6 +101,7 @@ export function useStudyGroups() {
   const updateGroup = async (groupId: string, updates: Partial<StudyGroup>) => {
     setIsLoading(true);
     try {
+      console.log('Updating group:', groupId);
       const { data, error } = await api.updateStudyGroup(groupId, updates);
       if (error) {
         console.error('Error updating group:', error);
@@ -111,6 +125,7 @@ export function useStudyGroups() {
   const deleteGroup = async (groupId: string) => {
     setIsLoading(true);
     try {
+      console.log('Deleting group:', groupId);
       const { error } = await api.deleteStudyGroup(groupId);
       if (error) {
         console.error('Error deleting group:', error);
@@ -137,7 +152,8 @@ export function useStudyGroups() {
       return { data: null, error: new Error('User not authenticated') };
     }
 
-    setIsLoading(true);
+    console.log('Joining group:', groupId, 'with expertise:', expertise);
+    
     try {
       const { data, error } = await api.joinStudyGroup(groupId, expertise);
       if (error) {
@@ -146,16 +162,16 @@ export function useStudyGroups() {
         return { data: null, error };
       }
       
-      // Refresh user groups to include the newly joined group
-      await fetchUserGroups();
-      addNotification('success', 'Successfully joined the study group!');
+      console.log('Successfully joined group:', groupId);
+      
+      // Refresh user groups in the background (don't wait for it)
+      fetchUserGroups().catch(err => console.error('Error refreshing user groups:', err));
+      
       return { data, error: null };
     } catch (error) {
       console.error('Error joining group:', error);
       addNotification('error', 'Failed to join study group');
       return { data: null, error };
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -168,6 +184,7 @@ export function useStudyGroups() {
 
     setIsLoading(true);
     try {
+      console.log('Leaving group:', groupId);
       const { error } = await api.leaveStudyGroup(groupId);
       if (error) {
         console.error('Error leaving group:', error);

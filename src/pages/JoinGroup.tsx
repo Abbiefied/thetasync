@@ -30,6 +30,7 @@ export default function JoinGroup() {
       }
 
       try {
+        console.log('Fetching group with ID:', id);
         setIsLoading(true);
         const { data, error } = await getStudyGroupById(id);
         
@@ -38,6 +39,7 @@ export default function JoinGroup() {
           addNotification('error', 'Failed to load group details');
           setGroup(null);
         } else {
+          console.log('Group fetched successfully:', data);
           setGroup(data);
         }
       } catch (error) {
@@ -58,14 +60,19 @@ export default function JoinGroup() {
       return;
     }
 
+    console.log('Attempting to join group:', group.id);
     setIsJoining(true);
     
     try {
       const { error } = await joinGroup(group.id, selectedExpertise);
       
       if (!error) {
+        console.log('Successfully joined group, navigating to my-groups');
         addNotification('success', `Successfully joined ${group.name}!`);
+        // Navigate immediately without waiting
         navigate('/my-groups');
+      } else {
+        console.error('Error joining group:', error);
       }
     } catch (error) {
       console.error('Error joining group:', error);
@@ -118,6 +125,7 @@ export default function JoinGroup() {
 
   const isGroupFull = group.memberCount >= group.maxMembers;
   const userIsMember = user ? isUserMember(group.id) : false;
+  const isOwner = group.createdBy === user?.id;
 
   return (
     <div className="min-h-screen bg-neutral-50 pt-8">
@@ -161,7 +169,7 @@ export default function JoinGroup() {
                     Members ({group.memberCount}/{group.maxMembers})
                   </h4>
                   <div className="space-y-2">
-                    {group.members.length > 0 ? (
+                    {group.members && group.members.length > 0 ? (
                       group.members.map((member) => (
                         <div key={member.userId} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                           <div className="flex items-center space-x-3">
@@ -192,7 +200,7 @@ export default function JoinGroup() {
                     Schedule
                   </h4>
                   <div className="space-y-2">
-                    {group.schedule.length > 0 ? (
+                    {group.schedule && group.schedule.length > 0 ? (
                       group.schedule.map((slot, index) => (
                         <div key={index} className="flex items-center justify-between p-3 bg-neutral-50 rounded-lg">
                           <div className="flex items-center space-x-2">
@@ -214,7 +222,7 @@ export default function JoinGroup() {
               <div className="mb-8">
                 <h4 className="font-medium text-neutral-900 mb-3">Topics Covered</h4>
                 <div className="flex flex-wrap gap-2">
-                  {group.tags.map((tag) => (
+                  {(group.tags || []).map((tag) => (
                     <span
                       key={tag}
                       className="px-3 py-1 bg-primary-100 text-primary-700 rounded-full text-sm"
@@ -235,10 +243,10 @@ export default function JoinGroup() {
                   <Users className="w-8 h-8 text-primary-600" />
                 </div>
                 <h3 className="text-lg font-semibold text-neutral-900 mb-2">
-                  {userIsMember ? 'Already a Member' : 'Join This Group'}
+                  {userIsMember || isOwner ? 'Already a Member' : 'Join This Group'}
                 </h3>
                 <p className="text-neutral-600 text-sm">
-                  {userIsMember 
+                  {userIsMember || isOwner
                     ? 'You are already a member of this group'
                     : `Connect with ${group.memberCount} other students and start learning together.`
                   }
@@ -262,7 +270,7 @@ export default function JoinGroup() {
                 
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-neutral-600">Meetings:</span>
-                  <span className="font-medium text-neutral-900">{group.schedule.length}x per week</span>
+                  <span className="font-medium text-neutral-900">{(group.schedule || []).length}x per week</span>
                 </div>
                 
                 <div className="flex items-center justify-between text-sm">
@@ -271,7 +279,7 @@ export default function JoinGroup() {
                 </div>
               </div>
 
-              {!userIsMember && !group.isPrivate && (
+              {!userIsMember && !isOwner && !group.isPrivate && (
                 <>
                   <div className="mb-4">
                     <label htmlFor="expertise" className="block text-sm font-medium text-neutral-700 mb-2">
@@ -305,7 +313,7 @@ export default function JoinGroup() {
                 </>
               )}
 
-              {userIsMember ? (
+              {userIsMember || isOwner ? (
                 <Button
                   onClick={() => navigate('/my-groups')}
                   className="w-full"
@@ -315,7 +323,7 @@ export default function JoinGroup() {
               ) : (
                 <Button
                   onClick={handleJoinGroup}
-                  disabled={isGroupFull || !user}
+                  disabled={isGroupFull || !user || isJoining}
                   isLoading={isJoining}
                   className="w-full"
                 >
@@ -323,7 +331,7 @@ export default function JoinGroup() {
                 </Button>
               )}
 
-              {isGroupFull && !userIsMember && (
+              {isGroupFull && !userIsMember && !isOwner && (
                 <p className="text-sm text-neutral-500 text-center mt-3">
                   This group has reached its maximum capacity. You can still bookmark it or check back later.
                 </p>
