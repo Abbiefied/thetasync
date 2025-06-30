@@ -7,7 +7,7 @@ export default function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="col-span-1 md:col-span-2">
-            <h3 className="text-xl font-bold text-white mb-4">ThetaSync</h3>
+            <h3 className="text-xl font-bold text-white mb-4">StudyCircle</h3>
             <p className="text-neutral-400 mb-4 max-w-md">
               Connect with like-minded students, form study groups, and achieve academic success together. 
               Built for the next generation of learners.
@@ -48,7 +48,7 @@ export default function Footer() {
 
         <div className="border-t border-neutral-800 pt-8 mt-8 flex flex-col sm:flex-row justify-between items-center">
           <p className="text-neutral-400 text-sm">
-            © 2025 ThetaSync. All rights reserved.
+            © 2025 StudyCircle. All rights reserved.
           </p>
           <div className="flex items-center space-x-2 mt-4 sm:mt-0">
             <span className="text-neutral-400 text-sm">Made with</span>

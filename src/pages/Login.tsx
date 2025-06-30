@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Users, Mail, Lock, Eye, EyeOff, AlertCircle, ArrowLeft } from 'lucide-react';
 import { signIn, signInWithGoogle } from '../lib/supabase';
-import { useAuth } from '../context/AuthContext';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -18,7 +17,6 @@ interface ValidationErrors {
 export default function Login() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user, userProfile, loading } = useAuth();
   const from = location.state?.from?.pathname || '/homepage';
   
   const [data, setData] = useState<LoginData>({
@@ -29,20 +27,6 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-
-  // Redirect if already authenticated - but only after loading is complete
-  useEffect(() => {
-    if (!loading && user) {
-      console.log('User already authenticated, checking profile...');
-      if (userProfile) {
-        console.log('User already logged in with profile, redirecting to:', from);
-        navigate(from, { replace: true });
-      } else {
-        console.log('User logged in but no profile, redirecting to onboarding');
-        navigate('/onboarding', { replace: true });
-      }
-    }
-  }, [user, userProfile, loading, navigate, from]);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -78,11 +62,9 @@ export default function Login() {
       setErrors({}); // Clear any previous errors
       
       try {
-        console.log('Attempting to sign in with:', data.email);
         const { data: authData, error } = await signIn(data.email, data.password);
         
         if (error) {
-          console.error('Sign in error:', error);
           if (error.message.includes('Invalid login credentials')) {
             setErrors({ general: 'Invalid email or password. Please check your credentials and try again.' });
           } else if (error.message.includes('Email not confirmed')) {
@@ -91,12 +73,11 @@ export default function Login() {
             setErrors({ general: error.message });
           }
         } else if (authData.user) {
-          console.log('Sign in successful for:', authData.user.email);
           // Clear form data on successful login
           setData({ email: '', password: '' });
           
-          // The auth context will handle navigation automatically
-          // Don't navigate manually here to avoid race conditions
+          // Navigate immediately - the auth context will handle the rest
+          navigate(from, { replace: true });
         }
       } catch (error) {
         console.error('Login error:', error);
@@ -112,11 +93,9 @@ export default function Login() {
     setErrors({}); // Clear any previous errors
     
     try {
-      console.log('Attempting Google sign in');
       const { error } = await signInWithGoogle();
       
       if (error) {
-        console.error('Google sign in error:', error);
         setErrors({ general: error.message });
         setIsGoogleLoading(false);
       }
@@ -138,31 +117,6 @@ export default function Login() {
     );
   };
 
-  // Show loading only if we're still checking auth state AND we don't have a definitive answer
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If user is already authenticated, don't render the login form
-  // The useEffect will handle the redirect
-  if (user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-          <p className="text-neutral-600">Redirecting...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary-50 via-white to-secondary-50 flex items-center justify-center p-4">
       <div className="w-full max-w-md">
@@ -182,7 +136,7 @@ export default function Login() {
           <div className="text-center mb-8">
             <div className="flex items-center justify-center space-x-2 text-primary-600 font-bold text-2xl mb-4">
               <Users className="w-8 h-8" />
-              <span>ThetaSync</span>
+              <span>StudyCircle</span>
             </div>
             <h1 className="text-2xl font-bold text-neutral-900 mb-2">Welcome Back</h1>
             <p className="text-neutral-600">Sign in to your account to continue learning</p>
@@ -343,7 +297,7 @@ export default function Login() {
           <div className="mt-6 p-4 bg-neutral-50 rounded-lg">
             <h4 className="text-sm font-medium text-neutral-700 mb-2">Demo Credentials</h4>
             <div className="text-sm text-neutral-600 space-y-1">
-              <p><strong>Email:</strong> demo@thetasync.com</p>
+              <p><strong>Email:</strong> demo@studycircle.com</p>
               <p><strong>Password:</strong> Demo123!</p>
             </div>
           </div>

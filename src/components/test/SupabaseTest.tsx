@@ -39,7 +39,7 @@ export default function SupabaseTest() {
       
       if (!supabaseUrl || !supabaseAnonKey) {
         updateTest(0, 'error', 'Missing environment variables', 
-          'VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not found. Please set these in your deployment environment.');
+          'VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY not found');
       } else if (supabaseUrl.includes('your_supabase_project_url') || supabaseAnonKey.includes('your_supabase_anon_key')) {
         updateTest(0, 'error', 'Placeholder values detected', 
           'Environment variables contain placeholder values. Please connect to Supabase.');
@@ -63,7 +63,7 @@ export default function SupabaseTest() {
         updateTest(1, 'error', 'Database connection failed', error.message);
       } else {
         updateTest(1, 'success', 'Database connection successful', 
-          `Connected to ThetaSync database`);
+          `Connected to Supabase database`);
       }
     } catch (error) {
       updateTest(1, 'error', 'Database connection error', String(error));
@@ -144,7 +144,7 @@ export default function SupabaseTest() {
     <div className="min-h-screen bg-neutral-50 pt-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-neutral-900 mb-2">ThetaSync Connection Test</h1>
+          <h1 className="text-3xl font-bold text-neutral-900 mb-2">Supabase Connection Test</h1>
           <p className="text-neutral-600">
             Testing the connection to Supabase and verifying all services are working correctly.
           </p>
@@ -218,7 +218,7 @@ export default function SupabaseTest() {
               
               {allTestsPassed && (
                 <p className="text-sm text-green-700 mt-2">
-                  Your ThetaSync connection is working correctly. All services are accessible and functioning properly.
+                  Your Supabase connection is working correctly. All services are accessible and functioning properly.
                 </p>
               )}
               
@@ -226,10 +226,10 @@ export default function SupabaseTest() {
                 <div className="text-sm text-red-700 mt-2">
                   <p className="mb-2">Please check the following:</p>
                   <ul className="list-disc list-inside space-y-1">
-                    <li>Ensure your Supabase environment variables are set in Netlify</li>
+                    <li>Ensure you've clicked "Connect to Supabase" in the top right</li>
                     <li>Verify your Supabase project is active and accessible</li>
                     <li>Check that the database migration has been run</li>
-                    <li>Confirm your environment variables are properly configured</li>
+                    <li>Confirm your environment variables are properly set</li>
                   </ul>
                 </div>
               )}
@@ -237,24 +237,101 @@ export default function SupabaseTest() {
           )}
         </Card>
 
-        {/* Environment Variables Setup Guide */}
+        {/* Database Migration SQL */}
         <Card>
-          <h2 className="text-xl font-semibold text-neutral-900 mb-4">Environment Variables Setup</h2>
+          <h2 className="text-xl font-semibold text-neutral-900 mb-4">Database Migration</h2>
           <p className="text-neutral-600 mb-4">
-            If you're seeing environment variable errors, you need to set these in your Netlify deployment:
+            If the user profile table test failed, you need to run this SQL migration in your Supabase SQL editor:
           </p>
           
-          <div className="bg-neutral-900 text-neutral-100 p-4 rounded-lg overflow-x-auto mb-4">
+          <div className="bg-neutral-900 text-neutral-100 p-4 rounded-lg overflow-x-auto">
             <pre className="text-sm">
-{`VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key`}
+{`/*
+  # Create user profiles table
+
+  1. New Tables
+    - \`user_profiles\`
+      - \`id\` (uuid, primary key, references auth.users)
+      - \`name\` (text)
+      - \`email\` (text)
+      - \`institution\` (text)
+      - \`course_of_study\` (text)
+      - \`academic_focus\` (text array)
+      - \`degree_level\` (text)
+      - \`year\` (text)
+      - \`bio\` (text, optional)
+      - \`learning_preference\` (text)
+      - \`general_interests\` (text array)
+      - \`study_goals\` (text array)
+      - \`availability\` (jsonb)
+      - \`created_at\` (timestamp)
+      - \`updated_at\` (timestamp)
+
+  2. Security
+    - Enable RLS on \`user_profiles\` table
+    - Add policies for authenticated users to manage their own profiles
+*/
+
+CREATE TABLE IF NOT EXISTS user_profiles (
+  id uuid PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  email text NOT NULL,
+  institution text NOT NULL,
+  course_of_study text NOT NULL,
+  academic_focus text[] DEFAULT '{}',
+  degree_level text NOT NULL CHECK (degree_level IN ('undergraduate', 'masters', 'phd', 'postdoc')),
+  year text NOT NULL,
+  bio text DEFAULT '',
+  learning_preference text NOT NULL CHECK (learning_preference IN ('Visual', 'Verbal', 'Kinesthetic')),
+  general_interests text[] DEFAULT '{}',
+  study_goals text[] DEFAULT '{}',
+  availability jsonb DEFAULT '[]',
+  created_at timestamptz DEFAULT now(),
+  updated_at timestamptz DEFAULT now()
+);
+
+-- Enable RLS
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Users can view own profile"
+  ON user_profiles
+  FOR SELECT
+  TO authenticated
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile"
+  ON user_profiles
+  FOR INSERT
+  TO authenticated
+  WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+  ON user_profiles
+  FOR UPDATE
+  TO authenticated
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+-- Create updated_at trigger
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+CREATE TRIGGER update_user_profiles_updated_at
+  BEFORE UPDATE ON user_profiles
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();`}
             </pre>
           </div>
           
-          <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
             <p className="text-sm text-blue-800">
-              <strong>Instructions:</strong> Go to your Netlify dashboard → Site settings → Environment variables, 
-              and add these variables with your actual Supabase project values.
+              <strong>Instructions:</strong> Copy the SQL above and paste it into your Supabase SQL Editor, then click "Run" to create the required table and policies.
             </p>
           </div>
         </Card>

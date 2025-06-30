@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Users, Search, Bell, User, Trophy, Home, Menu, X, LogOut } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 export default function Header() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, userProfile, signOut } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const isActive = (path: string) => location.pathname === path;
@@ -13,8 +15,14 @@ export default function Header() {
   if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/onboarding') return null;
 
   const handleSignOut = async () => {
-    // Redirect to landing page
-    navigate('/', { replace: true });
+    try {
+      await signOut();
+      navigate('/', { replace: true });
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Force navigation even if signOut fails
+      navigate('/', { replace: true });
+    }
   };
 
   const navigationItems = [
@@ -33,10 +41,10 @@ export default function Header() {
             <Link 
               to="/homepage" 
               className="flex items-center space-x-2 text-primary-600 font-bold text-xl hover:text-primary-700 transition-colors"
-              aria-label="ThetaSync Home"
+              aria-label="StudyCircle Home"
             >
               <Users className="w-8 h-8" />
-              <span>ThetaSync</span>
+              <span>StudyCircle</span>
             </Link>
 
             {/* Desktop Navigation */}
@@ -87,7 +95,7 @@ export default function Header() {
                   <User className="w-5 h-5 text-primary-600" />
                 </div>
                 <span className="text-sm font-medium text-neutral-700">
-                  Demo User
+                  {userProfile?.name || user?.user_metadata?.full_name || 'User'}
                 </span>
               </div>
 
@@ -145,7 +153,7 @@ export default function Header() {
                     <User className="w-5 h-5 text-primary-600" />
                   </div>
                   <span className="text-sm font-medium text-neutral-700">
-                    Demo User
+                    {userProfile?.name || user?.user_metadata?.full_name || 'User'}
                   </span>
                 </div>
 
