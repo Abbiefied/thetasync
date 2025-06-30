@@ -40,25 +40,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleSignOut = async () => {
     try {
       console.log('Starting sign out process...');
+      setLoading(true);
       
       // Clear state immediately to prevent UI issues
       setUser(null);
       setUserProfile(null);
       setSession(null);
-      setLoading(false); // Set loading to false immediately
       
       // Call Supabase signOut
       const { error } = await supabase.auth.signOut();
       if (error) {
         console.error('Supabase sign out error:', error);
+        // Even if there's an error, we've already cleared the local state
       } else {
         console.log('Supabase sign out successful');
       }
     } catch (error) {
       console.error('Sign out error:', error);
+    } finally {
+      // Always set loading to false and ensure state is cleared
+      setLoading(false);
+      setUser(null);
+      setUserProfile(null);
+      setSession(null);
+      console.log('Sign out process completed');
     }
-    
-    console.log('Sign out process completed');
   };
 
   useEffect(() => {

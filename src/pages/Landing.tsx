@@ -9,16 +9,16 @@ export default function Landing() {
   const { user, userProfile, loading } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect authenticated users with profiles to homepage
+  // Only redirect authenticated users with profiles to homepage
   useEffect(() => {
-    // Only redirect if we're not loading and have both user and profile
     if (!loading && user && userProfile) {
       console.log('Landing: Authenticated user with profile detected, redirecting to homepage');
       navigate('/homepage');
     }
   }, [user, userProfile, loading, navigate]);
 
-  // Show loading only if we have a user but are still loading their profile
+  // Don't show loading for unauthenticated users - show the landing page immediately
+  // Only show loading if we have a user but are still checking for their profile
   if (loading && user) {
     console.log('Landing: Loading user profile...');
     return (
