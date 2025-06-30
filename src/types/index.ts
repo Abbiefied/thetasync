@@ -28,6 +28,7 @@ export interface StudyGroup {
   subject: string;
   description: string;
   members: GroupMember[];
+  memberCount: number;
   maxMembers: number;
   schedule: TimeSlot[];
   tags: string[];

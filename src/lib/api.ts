@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import { StudyGroup, Task, Resource, Quiz, QuizQuestion, User } from '../types';
+import { StudyGroup, Task, Resource, Quiz, QuizQuestion, User, TimeSlot, GroupMember } from '../types';
 
 // ============================================================================
 // USER PROFILE OPERATIONS
@@ -35,13 +35,36 @@ export const getPublicStudyGroups = async () => {
     .from('study_groups')
     .select(`
       *,
-      group_members!inner(count),
-      group_schedules(*)
+      group_members(count),
+      group_schedules(day, start_time, end_time)
     `)
     .eq('is_private', false)
     .order('created_at', { ascending: false });
   
-  return { data, error };
+  if (error) return { data: null, error };
+
+  // Transform the data to match StudyGroup interface
+  const transformedData: StudyGroup[] = (data || []).map(group => ({
+    id: group.id,
+    name: group.name,
+    subject: group.subject,
+    description: group.description,
+    members: [], // Will be populated when needed
+    memberCount: group.group_members?.[0]?.count || 0,
+    maxMembers: group.max_members,
+    schedule: (group.group_schedules || []).map((schedule: any) => ({
+      day: schedule.day,
+      startTime: schedule.start_time,
+      endTime: schedule.end_time
+    })),
+    tags: group.tags || [],
+    difficulty: group.difficulty,
+    isPrivate: group.is_private,
+    createdBy: group.created_by,
+    createdAt: new Date(group.created_at)
+  }));
+  
+  return { data: transformedData, error: null };
 };
 
 export const getUserStudyGroups = async (userId: string) => {
@@ -56,12 +79,41 @@ export const getUserStudyGroups = async (userId: string) => {
         joined_at,
         user_profiles(name)
       ),
-      group_schedules(*)
+      group_schedules(day, start_time, end_time)
     `)
     .eq('group_members.user_id', userId)
     .order('created_at', { ascending: false });
   
-  return { data, error };
+  if (error) return { data: null, error };
+
+  // Transform the data to match StudyGroup interface
+  const transformedData: StudyGroup[] = (data || []).map(group => ({
+    id: group.id,
+    name: group.name,
+    subject: group.subject,
+    description: group.description,
+    members: (group.group_members || []).map((member: any) => ({
+      userId: member.user_id,
+      name: member.user_profiles?.name || 'Unknown',
+      role: member.role,
+      expertise: member.expertise,
+      joinedAt: new Date(member.joined_at)
+    })),
+    memberCount: group.group_members?.length || 0,
+    maxMembers: group.max_members,
+    schedule: (group.group_schedules || []).map((schedule: any) => ({
+      day: schedule.day,
+      startTime: schedule.start_time,
+      endTime: schedule.end_time
+    })),
+    tags: group.tags || [],
+    difficulty: group.difficulty,
+    isPrivate: group.is_private,
+    createdBy: group.created_by,
+    createdAt: new Date(group.created_at)
+  }));
+  
+  return { data: transformedData, error: null };
 };
 
 export const getStudyGroupById = async (groupId: string) => {
@@ -76,12 +128,41 @@ export const getStudyGroupById = async (groupId: string) => {
         joined_at,
         user_profiles(name, email)
       ),
-      group_schedules(*)
+      group_schedules(day, start_time, end_time)
     `)
     .eq('id', groupId)
     .single();
   
-  return { data, error };
+  if (error) return { data: null, error };
+
+  // Transform the data to match StudyGroup interface
+  const transformedData: StudyGroup = {
+    id: data.id,
+    name: data.name,
+    subject: data.subject,
+    description: data.description,
+    members: (data.group_members || []).map((member: any) => ({
+      userId: member.user_id,
+      name: member.user_profiles?.name || 'Unknown',
+      role: member.role,
+      expertise: member.expertise,
+      joinedAt: new Date(member.joined_at)
+    })),
+    memberCount: data.group_members?.length || 0,
+    maxMembers: data.max_members,
+    schedule: (data.group_schedules || []).map((schedule: any) => ({
+      day: schedule.day,
+      startTime: schedule.start_time,
+      endTime: schedule.end_time
+    })),
+    tags: data.tags || [],
+    difficulty: data.difficulty,
+    isPrivate: data.is_private,
+    createdBy: data.created_by,
+    createdAt: new Date(data.created_at)
+  };
+  
+  return { data: transformedData, error: null };
 };
 
 export const createStudyGroup = async (groupData: {
@@ -187,6 +268,101 @@ export const leaveStudyGroup = async (groupId: string) => {
     .eq('user_id', user.id);
   
   return { error };
+};
+
+// ============================================================================
+// DEMO DATA CREATION
+// ============================================================================
+
+export const createDemoGroups = async () => {
+  const demoGroups = [
+    {
+      name: "Advanced React Development",
+      subject: "Computer Science",
+      description: "Deep dive into React hooks, context, and advanced patterns. Perfect for developers looking to master modern React development.",
+      max_members: 8,
+      difficulty: "Advanced" as const,
+      is_private: false,
+      tags: ["React", "JavaScript", "Frontend", "Hooks"],
+      schedules: [
+        { day: "Tuesday", start_time: "19:00", end_time: "21:00" },
+        { day: "Thursday", start_time: "19:00", end_time: "21:00" }
+      ]
+    },
+    {
+      name: "Calculus Study Circle",
+      subject: "Mathematics",
+      description: "Weekly sessions covering differential and integral calculus. We work through problem sets and prepare for exams together.",
+      max_members: 12,
+      difficulty: "Intermediate" as const,
+      is_private: false,
+      tags: ["Calculus", "Problem Solving", "Exam Prep"],
+      schedules: [
+        { day: "Wednesday", start_time: "18:00", end_time: "20:00" }
+      ]
+    },
+    {
+      name: "Organic Chemistry Lab Partners",
+      subject: "Chemistry",
+      description: "Form study partnerships for organic chemistry lab work and theory. Share notes, discuss mechanisms, and prepare for lab practicals.",
+      max_members: 6,
+      difficulty: "Advanced" as const,
+      is_private: false,
+      tags: ["Organic Chemistry", "Lab Work", "Mechanisms"],
+      schedules: [
+        { day: "Monday", start_time: "16:00", end_time: "18:00" },
+        { day: "Friday", start_time: "14:00", end_time: "16:00" }
+      ]
+    },
+    {
+      name: "Spanish Conversation Practice",
+      subject: "Languages",
+      description: "Practice Spanish conversation in a supportive environment. All levels welcome! We focus on practical communication skills.",
+      max_members: 10,
+      difficulty: "Beginner" as const,
+      is_private: false,
+      tags: ["Spanish", "Conversation", "Language Learning"],
+      schedules: [
+        { day: "Saturday", start_time: "10:00", end_time: "12:00" }
+      ]
+    },
+    {
+      name: "Data Structures & Algorithms",
+      subject: "Computer Science",
+      description: "Master fundamental data structures and algorithms. Perfect for technical interview preparation and computer science coursework.",
+      max_members: 15,
+      difficulty: "Intermediate" as const,
+      is_private: false,
+      tags: ["Algorithms", "Data Structures", "Interview Prep", "Coding"],
+      schedules: [
+        { day: "Sunday", start_time: "14:00", end_time: "17:00" }
+      ]
+    },
+    {
+      name: "Psychology Research Methods",
+      subject: "Psychology",
+      description: "Study group for research methods in psychology. We review statistical concepts, research design, and analyze published studies.",
+      max_members: 8,
+      difficulty: "Intermediate" as const,
+      is_private: false,
+      tags: ["Research Methods", "Statistics", "Psychology"],
+      schedules: [
+        { day: "Tuesday", start_time: "15:00", end_time: "17:00" }
+      ]
+    }
+  ];
+
+  const results = [];
+  for (const groupData of demoGroups) {
+    try {
+      const result = await createStudyGroup(groupData);
+      results.push(result);
+    } catch (error) {
+      console.error('Error creating demo group:', error);
+    }
+  }
+
+  return results;
 };
 
 // ============================================================================

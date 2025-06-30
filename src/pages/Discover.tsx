@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Filter, Users, Clock, Star, Plus } from 'lucide-react';
 import { StudyGroup } from '../types';
 import { useStudyGroups } from '../hooks/useStudyGroups';
+import { createDemoGroups } from '../lib/api';
 import Button from '../components/common/Button';
 import Card from '../components/common/Card';
 
@@ -12,10 +13,26 @@ export default function Discover() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubject, setSelectedSubject] = useState('');
   const [selectedDifficulty, setSelectedDifficulty] = useState('');
+  const [demoCreated, setDemoCreated] = useState(false);
 
   useEffect(() => {
-    fetchPublicGroups();
-  }, []);
+    const initializeData = async () => {
+      await fetchPublicGroups();
+      
+      // Create demo groups if none exist and haven't been created yet
+      if (!demoCreated && studyGroups.length === 0) {
+        try {
+          await createDemoGroups();
+          setDemoCreated(true);
+          await fetchPublicGroups(); // Refresh after creating demo groups
+        } catch (error) {
+          console.error('Error creating demo groups:', error);
+        }
+      }
+    };
+
+    initializeData();
+  }, [demoCreated]);
 
   useEffect(() => {
     let filtered = studyGroups;
@@ -53,7 +70,7 @@ export default function Discover() {
   };
 
   const getScheduleText = (schedule: StudyGroup['schedule']) => {
-    if (schedule.length === 0) return 'No scheduled meetings';
+    if (!schedule || schedule.length === 0) return 'No scheduled meetings';
     if (schedule.length === 1) {
       const slot = schedule[0];
       return `${slot.day}s ${slot.startTime}-${slot.endTime}`;
@@ -174,7 +191,7 @@ export default function Discover() {
                   <div className="space-y-3 mb-4">
                     <div className="flex items-center text-sm text-neutral-500">
                       <Users className="w-4 h-4 mr-2" />
-                      {group.members.length} of {group.maxMembers} members
+                      {group.memberCount || 0} of {group.maxMembers} members
                     </div>
 
                     <div className="flex items-center text-sm text-neutral-500">
@@ -203,9 +220,9 @@ export default function Discover() {
                 <Link to={`/group/${group.id}/join`}>
                   <Button 
                     className="w-full"
-                    disabled={group.members.length >= group.maxMembers}
+                    disabled={(group.memberCount || 0) >= group.maxMembers}
                   >
-                    {group.members.length >= group.maxMembers ? 'Group Full' : 'Join Group'}
+                    {(group.memberCount || 0) >= group.maxMembers ? 'Group Full' : 'Join Group'}
                   </Button>
                 </Link>
               </Card>
