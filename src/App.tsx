@@ -32,6 +32,7 @@ function App() {
                 <Route path="/" element={<Landing />} />
                 <Route path="/signup" element={<SignUp />} />
                 <Route path="/login" element={<Login />} />
+                {/* Onboarding is NOT protected - users need to access it to complete their profile */}
                 <Route path="/onboarding" element={<Onboarding />} />
                 <Route path="/test-supabase" element={<SupabaseTest />} />
                 <Route 

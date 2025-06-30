@@ -271,15 +271,10 @@ export default function Onboarding() {
 
       console.log('Profile created successfully, refreshing profile...');
       // Refresh the profile in context
-      const newProfile = await refreshProfile();
+      await refreshProfile();
       
-      if (newProfile) {
-        console.log('Profile refresh successful, navigating to homepage');
-        navigate('/homepage');
-      } else {
-        console.error('Profile refresh failed');
-        setErrors({ general: 'Profile created but failed to load. Please refresh the page.' });
-      }
+      console.log('Profile refresh complete, navigating to homepage');
+      navigate('/homepage');
     } catch (error) {
       console.error('Profile creation error:', error);
       setErrors({ general: 'An unexpected error occurred while creating your profile. Please try again.' });

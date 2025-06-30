@@ -11,8 +11,13 @@ export default function Header() {
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Hide header on landing page and login page
-  if (location.pathname === '/' || location.pathname === '/login' || location.pathname === '/onboarding') return null;
+  // Hide header on landing page, login page, signup page, and onboarding
+  if (location.pathname === '/' || 
+      location.pathname === '/login' || 
+      location.pathname === '/signup' || 
+      location.pathname === '/onboarding') {
+    return null;
+  }
 
   const handleSignOut = async () => {
     await signOut();
