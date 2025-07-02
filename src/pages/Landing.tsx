@@ -103,7 +103,7 @@ export default function Landing() {
                 </Button>
               </Link>
               <a 
-                href="https://youtube.com" 
+                href="https://www.youtube.com/watch?v=fwkW8F30Jy4" 
                 target="_blank" 
                 rel="noopener noreferrer"
               >
