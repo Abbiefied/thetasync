@@ -36,13 +36,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  // If user exists but no profile, redirect to onboarding
-  if (user && !userProfile) {
+  // If user exists but no profile, redirect to onboarding (but skip if already on onboarding)
+  if (user && !userProfile && location.pathname !== '/onboarding') {
     console.log('ProtectedRoute: User found but no profile, redirecting to onboarding');
     return <Navigate to="/onboarding" replace />;
   }
 
-  // User is authenticated and has profile, render the protected content
-  console.log('ProtectedRoute: User authenticated with profile, rendering content');
+  // User is authenticated (and has profile or is on onboarding), render the content
+  console.log('ProtectedRoute: User authenticated with profile or onboarding, rendering content');
   return <>{children}</>;
 }
